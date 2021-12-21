@@ -1,269 +1,269 @@
-# 实现领域驱动设计
+# 實現領域驅動設計
 
-## 总述
+## 總述
 
-本文是实现领域驱动设计(DDD)的**实用指南**.虽然在实现中依赖了ABP框架,但是本文中的概念,理论和设计模式同样适用于其它类型的项目,不仅限于.Net项目.
+本文是實現領域驅動設計(DDD)的**實用指南**.雖然在實現中依賴了ABP框架,但是本文中的概念,理論和設計模式同樣適用於其它型別的專案,不僅限於.Net專案.
 
-### 目标
+### 目標
 
-本文的目标是:
+本文的目標是:
 
-* **介绍并解释**DDD的架构,概念,原理及构建.
-* **解释**ABP框架的分层架构及解决方案结构.
-* 通过**案例**,介绍实现DDD的一些**规则**及最佳实践.
-* 展示**ABP框架**为DDD的实现提供了哪些基础设施.
-* 最后,基于软件开发**最佳实践**和我们的经验提供**建议**来创建一个**可维护的代码库**.
+* **介紹並解釋**DDD的架構,概念,原理及構建.
+* **解釋**ABP框架的分層架構及解決方案結構.
+* 透過**案例**,介紹實現DDD的一些**規則**及最佳實踐.
+* 展示**ABP框架**為DDD的實現提供了哪些基礎設施.
+* 最後,基於軟體開發**最佳實踐**和我們的經驗提供**建議**來建立一個**可維護的程式碼庫**.
 
-### 简单的代码
+### 簡單的程式碼
 
-> **踢足球**非常**简单**,但是**踢简单的足球**却**非常难**.&mdash; <cite>约翰·克鲁伊夫(Johan Cruyff)</cite>
+> **踢足球**非常**簡單**,但是**踢簡單的足球**卻**非常難**.&mdash; <cite>約翰·克魯伊夫(Johan Cruyff)</cite>
 
-在编码的世界中,引用此名言:
+在編碼的世界中,引用此名言:
 
-> **写代码**非常**简单**,但是**写简单的代码**却**非常难** &mdash; <cite>???</cite>
+> **寫程式碼**非常**簡單**,但是**寫簡單的程式碼**卻**非常難** &mdash; <cite>???</cite>
 
-在本文中,我们将介绍一些容易实现的规则.
+在本文中,我們將介紹一些容易實現的規則.
 
-随着**应用程序的变化**,有时候,为了节省开发时间会**违反一些本应遵守的规则**,使得代码变得**复杂**且难以维护.短期来看确实节省了开发时间,但是后期可能需要花费更多的时间为之前的偷懒而**买单**.**无法对原有的代码进行维护**,导致大量的逻辑都需要进行**重写**.
+隨著**應用程式的變化**,有時候,為了節省開發時間會**違反一些本應遵守的規則**,使得程式碼變得**複雜**且難以維護.短期來看確實節省了開發時間,但是後期可能需要花費更多的時間為之前的偷懶而**買單**.**無法對原有的程式碼進行維護**,導致大量的邏輯都需要進行**重寫**.
 
-如果你**遵循规则并按最佳实践的方式**进行编码,那么你的代码将易于维护,你的业务逻辑将**更快的满足**需求的变化.
+如果你**遵循規則並按最佳實踐的方式**進行編碼,那麼你的程式碼將易於維護,你的業務邏輯將**更快的滿足**需求的變化.
 
-## 什么是领域驱动设计?
+## 什麼是領域驅動設計?
 
-领域驱动设计(DDD)是一种将实现与**持续进化**的模型连接在一起来满足**复杂**需求的软件开发方法.
+領域驅動設計(DDD)是一種將實現與**持續進化**的模型連線在一起來滿足**複雜**需求的軟體開發方法.
 
-DDD适用于**复杂领域**或**较大规模**的系统,而不是简单的CRUD程序.它着重与**核心领域逻辑**,而不是基础架构.这样有助于构建一个**灵活**,模块化,**可维护**的代码库.
+DDD適用於**複雜領域**或**較大規模**的系統,而不是簡單的CRUD程式.它著重與**核心領域邏輯**,而不是基礎架構.這樣有助於構建一個**靈活**,模組化,**可維護**的程式碼庫.
 
 ### OOP & SOLID
 
-实现DDD高度依赖面对对象编程思想(OOP)和[SOLID](https://zh.wikipedia.org/wiki/SOLID_(%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E8%AE%BE%E8%AE%A1))原则.事实上,DDD已经**实现**并**延伸**了这些原则,因此,**深入了解**OOP和SOLID对实施DDD十分有利.
+實現DDD高度依賴面對物件程式設計思想(OOP)和[SOLID](https://zh.wikipedia.org/wiki/SOLID_(%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E8%AE%BE%E8%AE%A1))原則.事實上,DDD已經**實現**並**延伸**了這些原則,因此,**深入瞭解**OOP和SOLID對實施DDD十分有利.
 
-### DDD分层与整洁架构
+### DDD分層與整潔架構
 
-基于DDD的架构分为四个基础层
+基於DDD的架構分為四個基礎層
 
 ![domain-driven-design-layers](images/domain-driven-design-layers.png)
 
-**业务逻辑**分为两层,分别为 *领域(Domain)* 层和 *应用(Application)* 层,它们包含不同类型的业务逻辑.
+**業務邏輯**分為兩層,分別為 *領域(Domain)* 層和 *應用(Application)* 層,它們包含不同型別的業務邏輯.
 
-* **领域层**:只实现领域业务逻辑,与用例无关.
-* **应用层**:基于领域层来实现满足用例的业务逻辑.用例可以看作是用户界面(UI)或外部应用程序的交互.
-* **展现层**:包含应用程序的UI元素.
-* **基础设施层**:通过对第三方库的集成或抽象,来满足其它层的非核心业务逻辑的实现.
+* **領域層**:只實現領域業務邏輯,與用例無關.
+* **應用層**:基於領域層來實現滿足用例的業務邏輯.用例可以看作是使用者介面(UI)或外部應用程式的互動.
+* **展現層**:包含應用程式的UI元素.
+* **基礎設施層**:透過對第三方庫的整合或抽象,來滿足其它層的非核心業務邏輯的實現.
 
-同样的分层架构也可以如下图所示:被称为 **整洁架构**, 又或者称为 **洋葱架构**:
+同樣的分層架構也可以如下圖所示:被稱為 **整潔架構**, 又或者稱為 **洋蔥架構**:
 
 ![domain-driven-design-clean-architecture](images/domain-driven-design-clean-architecture.png)
 
-在整洁架构中,**每层只依赖内部的层**,独立的层在圆圈的最中心,也就是领域层.
+在整潔架構中,**每層只依賴內部的層**,獨立的層在圓圈的最中心,也就是領域層.
 
-### 核心构建组成
+### 核心構建組成
 
-DDD的关注点在**领域层**和**应用层**上,而展现层和基础设施层则视为*细节*(这个词原文太抽象,自己体会吧),业务层不应依赖它们.
+DDD的關注點在**領域層**和**應用層**上,而展現層和基礎設施層則視為*細節*(這個詞原文太抽象,自己體會吧),業務層不應依賴它們.
 
-这并不意味着展现层和基础设施层不重要.它们非常重要,但*UI框架* 和 *数据库提供程序* 需要你自己定义规则和总结最佳实践.这些不在DDD的讨论范围中.
+這並不意味著展現層和基礎設施層不重要.它們非常重要,但*UI框架* 和 *資料庫提供程式* 需要你自己定義規則和總結最佳實踐.這些不在DDD的討論範圍中.
 
-本节将介绍领域层和应用层的基本构建组件.
+本節將介紹領域層和應用層的基本構建元件.
 
-#### 领域层构建组成
+#### 領域層構建組成
 
-* **实体(Entity)**: [实体](Entities.md)是种领域对象,它有自己的属性(状态,数据)和执行业务逻辑的方法.实体由唯一标识符(Id)表示,不同ID的两个实体被视为不同的实体.
-* **值对象(Value Object)**: [值对象](Value-Objects.md)是另外一种类型的领域对象,使用值对象的属性来判断两个值对象是否相同,而非使用ID判断.如果两个值对象的属性值全部相同就被视为同一对象.值对象通常是不可变的,大多数情况下它比实体简单.
-* **聚合(Aggregate) 和 聚合根(Aggregate Root)**: [聚合](Entities.md)是由**聚合根**包裹在一起的一组对象(实体和值对象).聚合根是一种具有特定职责的实体.
-* **仓储(Repository)** (接口): [仓储](Repositories.md)是被领域层或应用层调用的数据库持久化接口.它隐藏了DBMS的复杂性,领域层中只定义仓储接口,而非实现.
-* **领域服务(Domain Service)**: [领域服务](Domain-Services.md)是一种无状态的服务,它依赖多个聚合(实体)或外部服务来实现该领域的核心业务逻辑.
-* **规约(Specification)**: [规约](Specifications.md)是一种**强命名**,**可重用**,**可组合**,**可测试**的实体过滤器.
-* **领域事件(Domain Event)**: [领域事件](Event-Bus.md)是当领域某个事件发生时,通知其它领域服务的方式,为了解耦领域服务间的依赖.
+* **實體(Entity)**: [實體](Entities.md)是種領域物件,它有自己的屬性(狀態,資料)和執行業務邏輯的方法.實體由唯一識別符號(Id)表示,不同ID的兩個實體被視為不同的實體.
+* **值物件(Value Object)**: [值物件](Value-Objects.md)是另外一種型別的領域物件,使用值物件的屬性來判斷兩個值物件是否相同,而非使用ID判斷.如果兩個值物件的屬性值全部相同就被視為同一物件.值物件通常是不可變的,大多數情況下它比實體簡單.
+* **聚合(Aggregate) 和 聚合根(Aggregate Root)**: [聚合](Entities.md)是由**聚合根**包裹在一起的一組物件(實體和值物件).聚合根是一種具有特定職責的實體.
+* **倉儲(Repository)** (介面): [倉儲](Repositories.md)是被領域層或應用層呼叫的資料庫持久化介面.它隱藏了DBMS的複雜性,領域層中只定義倉儲介面,而非實現.
+* **領域服務(Domain Service)**: [領域服務](Domain-Services.md)是一種無狀態的服務,它依賴多個聚合(實體)或外部服務來實現該領域的核心業務邏輯.
+* **規約(Specification)**: [規約](Specifications.md)是一種**強命名**,**可重用**,**可組合**,**可測試**的實體過濾器.
+* **領域事件(Domain Event)**: [領域事件](Event-Bus.md)是當領域某個事件發生時,通知其它領域服務的方式,為了解耦領域服務間的依賴.
 
-#### 应用层构建组成
+#### 應用層構建組成
 
-* **应用服务(Application Service)**: [应用服务](Application-Services.md)是为实现用例的无状态服务.展现层调用应用服务获取DTO.应用服务调用多个领域服务实现用例.用例通常被视为一个工作单元.
-* **数据传输对象(DTO)**: [DTO](Data-Transfer-Objects.md)是一个不含业务逻辑的简单对象,用于应用服务层与展现层间的数据传输.
-* **工作单元(UOW)**: [工作单元](Unit-Of-Work.md)是事务的原子操作.UOW内所有操作,当成功时全部提交,失败时全部回滚.
+* **應用服務(Application Service)**: [應用服務](Application-Services.md)是為實現用例的無狀態服務.展現層呼叫應用服務獲取DTO.應用服務呼叫多個領域服務實現用例.用例通常被視為一個工作單元.
+* **資料傳輸物件(DTO)**: [DTO](Data-Transfer-Objects.md)是一個不含業務邏輯的簡單物件,用於應用服務層與展現層間的資料傳輸.
+* **工作單元(UOW)**: [工作單元](Unit-Of-Work.md)是事務的原子操作.UOW內所有操作,當成功時全部提交,失敗時全部回滾.
 
-## 实现领域驱动:重点
+## 實現領域驅動:重點
 
-### .NET解决方案分层
+### .NET解決方案分層
 
-下图是使用[ABP的启动模板](Startup-Templates/Application.md)创建的解决方案:
+下圖是使用[ABP的啟動模板](Startup-Templates/Application.md)建立的解決方案:
 
 ![domain-driven-design-vs-solution](images/domain-driven-design-vs-solution.png)
 
-解决方案名为 `IssueTracking` ,它包含多个项目.该解决方案出于**DDD原则**及**开发**和**部署**的实践来进行分层.后面会在各小节中介绍解决方案中的项目.
+解決方案名為 `IssueTracking` ,它包含多個專案.該解決方案出於**DDD原則**及**開發**和**部署**的實踐來進行分層.後面會在各小節中介紹解決方案中的專案.
 
-> 在使用启动模板时,如果选择了其它类型的UI或*数据库提供程序*,解决方案的结构会略有不同.但是领域层和应用层是一样的,这才是DDD的重点.如果你想了解有关解决方案的更多信息,请参见[启动模板](Startup-Templates/Application.md).
+> 在使用啟動模板時,如果選擇了其它型別的UI或*資料庫提供程式*,解決方案的結構會略有不同.但是領域層和應用層是一樣的,這才是DDD的重點.如果你想了解有關解決方案的更多資訊,請參見[啟動模板](Startup-Templates/Application.md).
 
-#### 领域层
+#### 領域層
 
-领域层分为两个项目:
+領域層分為兩個專案:
 
-* `IssueTracking.Domain`是**领域层中必需**的,它包含之前介绍的**构建组成**(实体,值对象,领域服务,规约,仓储接口等).
-* `IssueTracking.Domain.Shared`是领域层中**很薄的项目**,它只包含领域层与其它层共享的数据类型的定义.例如,枚举,常量等.
+* `IssueTracking.Domain`是**領域層中必需**的,它包含之前介紹的**構建組成**(實體,值物件,領域服務,規約,倉儲介面等).
+* `IssueTracking.Domain.Shared`是領域層中**很薄的專案**,它只包含領域層與其它層共享的資料型別的定義.例如,列舉,常量等.
 
-#### 应用层
+#### 應用層
 
-应用层也被分为了两个项目:
+應用層也被分為了兩個專案:
 
-* `IssueTracking.Application.Contracts`包含**接口**的定义及接口依赖的**DTO**,此项目可以被展现层或其它客户端应用程序引用.
-* `IssueTracking.Application`是**应用层中必需**的,它实现了`IssueTracking.Application.Contracts`项目中定义的接口.
+* `IssueTracking.Application.Contracts`包含**介面**的定義及介面依賴的**DTO**,此專案可以被展現層或其它客戶端應用程式引用.
+* `IssueTracking.Application`是**應用層中必需**的,它實現了`IssueTracking.Application.Contracts`專案中定義的介面.
 
-#### 展现层
+#### 展現層
 
-* `IssueTracking.Web`是一个ASP.NET Core MVC / Razor Pages应用程序.它是提供UI元素及API服务的可执行程序.
+* `IssueTracking.Web`是一個ASP.NET Core MVC / Razor Pages應用程式.它是提供UI元素及API服務的可執行程式.
 
-> ABP框架还支持其它类型的UI框架,包括[Angular](UI/Angular/Quick-Start.md)和[Blazor](UI/Blazor/Overall.md).当选择*Angular*或*Blazor*时,解决方案不会有`IssueTracking.Web`项目.但是会添加`IssueTracking.HttpApi.Host`在解决方案中,此项目会提供HTTP API供UI调用.
+> ABP框架還支援其它型別的UI框架,包括[Angular](UI/Angular/Quick-Start.md)和[Blazor](UI/Blazor/Overall.md).當選擇*Angular*或*Blazor*時,解決方案不會有`IssueTracking.Web`專案.但是會新增`IssueTracking.HttpApi.Host`在解決方案中,此專案會提供HTTP API供UI呼叫.
 
-#### 远程服务层
+#### 遠端服務層
 
-* `IssueTracking.HttpApi`包含了HTTP API的定义.它通常包含*MVC Controller* 和 *Model*(如果有).因此,你可以在此项目中提供HTTP API.
+* `IssueTracking.HttpApi`包含了HTTP API的定義.它通常包含*MVC Controller* 和 *Model*(如果有).因此,你可以在此專案中提供HTTP API.
 
-> 大多数情况下,通过使用*API Controller* 包装应用服务,供客户端远程调用.ABP框架的[API自发现系统](API/Auto-API-Controllers.md)可以自动将应用服务公开为API,因此,通常不需要在此项目中再创建Controller.出于需要手动添加额外Controller的情况,也包含在模板解决方案中.
+> 大多數情況下,透過使用*API Controller* 包裝應用服務,供客戶端遠端呼叫.ABP框架的[API自發現系統](API/Auto-API-Controllers.md)可以自動將應用服務公開為API,因此,通常不需要在此專案中再建立Controller.出於需要手動新增額外Controller的情況,也包含在模板解決方案中.
 
-* `IssueTracking.HttpApi.Client`当C#客户端应用程序需要调用`IssueTracking.HttpApi`的API时,这个项目非常有用.客户端程序仅需引用此项目就可以通过依赖注入方式,远程调用应用服务.它是通过ABP框架的[动态C#客户端API代理系统](API/Dynamic-CSharp-API-Clients.md)来实现的.
+* `IssueTracking.HttpApi.Client`當C#客戶端應用程式需要呼叫`IssueTracking.HttpApi`的API時,這個專案非常有用.客戶端程式僅需引用此專案就可以透過依賴注入方式,遠端呼叫應用服務.它是透過ABP框架的[動態C#客戶端API代理系統](API/Dynamic-CSharp-API-Clients.md)來實現的.
 
-> 在解决方案文件夹`test`下,有一个名为`IssueTracking.HttpApi.Client.ConsoleTestApp`的控制台程序.它演示了如何使用`IssueTracking.HttpApi.Client`项目来远程调用应用程序公开的API.因为只是演示,你可以删除此项目,再或者你认为`IssueTracking.HttpApi`不需要,同样可以删除.
+> 在解決方案資料夾`test`下,有一個名為`IssueTracking.HttpApi.Client.ConsoleTestApp`的控制檯程式.它演示瞭如何使用`IssueTracking.HttpApi.Client`專案來遠端呼叫應用程式公開的API.因為只是演示,你可以刪除此專案,再或者你認為`IssueTracking.HttpApi`不需要,同樣可以刪除.
 
-#### 基础设施层
+#### 基礎設施層
 
-你可能只创建一个基础设施项目来完成所有抽象类的定义及外部类的集成,又或者为不同的依赖创建多个不同的项目.
+你可能只建立一個基礎設施專案來完成所有抽象類的定義及外部類的整合,又或者為不同的依賴建立多個不同的專案.
 
-我们建议采用一种平衡的方法:为主要的依赖的库(例如 Entity Framework Core)创建一个独立的项目,为其它的依赖库创建一个公共的基础设施项目.
+我們建議採用一種平衡的方法:為主要的依賴的庫(例如 Entity Framework Core)建立一個獨立的專案,為其它的依賴庫建立一個公共的基礎設施專案.
 
-ABP的启动解决方案中包含两个用于集成Entity Framework Core的项目:
+ABP的啟動解決方案中包含兩個用於整合Entity Framework Core的專案:
 
-* `IssueTracking.EntityFrameworkCore`是必需的,因为需要集成*EF Core*.应用程序的`数据库上下文(DbContext)`,数据库对象映射,仓储接口的实现,以及其它与*EF Core*相关的内容都位于此项目中.
-* `IssueTracking.EntityFrameworkCore.DbMigrations`是管理Code First方式数据库迁移记录的特殊项目.此项目定义了一个独立的`DbContext`来追踪迁移记录.只有当添加一个新的数据库迁移记录或添加一个新的[应用模块](Modules/Index.md)时,才会使用此项目,否则,其它情况无需修改此项目内容.
+* `IssueTracking.EntityFrameworkCore`是必需的,因為需要整合*EF Core*.應用程式的`資料庫上下文(DbContext)`,資料庫物件對映,倉儲介面的實現,以及其它與*EF Core*相關的內容都位於此專案中.
+* `IssueTracking.EntityFrameworkCore.DbMigrations`是管理Code First方式資料庫遷移記錄的特殊專案.此專案定義了一個獨立的`DbContext`來追蹤遷移記錄.只有當新增一個新的資料庫遷移記錄或新增一個新的[應用模組](Modules/Index.md)時,才會使用此專案,否則,其它情況無需修改此專案內容.
 
-> 你可能想知道为什么会有两个EF Core项目,主要是因为[模块化](Module-Development-Basics.md).每个应用模块都有自己独立的`DbContext`,你的应用程序也有自己`DbContext`.`DbMigrations`项目包含**合并**所有模块迁移记录的**单个迁移路径**.虽然大多数情况下你无需过多了解,但也可以查看[EF Core迁移](Entity-Framework-Core-Migrations.md)了解更多信息. 
+> 你可能想知道為什麼會有兩個EF Core專案,主要是因為[模組化](Module-Development-Basics.md).每個應用模組都有自己獨立的`DbContext`,你的應用程式也有自己`DbContext`.`DbMigrations`專案包含**合併**所有模組遷移記錄的**單個遷移路徑**.雖然大多數情況下你無需過多瞭解,但也可以檢視[EF Core遷移](Entity-Framework-Core-Migrations.md)瞭解更多資訊. 
 
-#### 其它项目
+#### 其它專案
 
-另外还有一个项目`IssueTracking.DbMigrator`,它是一个简单的控制台程序,用来执行数据库迁移,包括**初始化**数据库及创建**种子数据**.这是一个非常实用的应用程序,你可以在开发环境或生产环境中使用它.
+另外還有一個專案`IssueTracking.DbMigrator`,它是一個簡單的控制檯程式,用來執行資料庫遷移,包括**初始化**資料庫及建立**種子資料**.這是一個非常實用的應用程式,你可以在開發環境或生產環境中使用它.
 
-### 项目间的依赖关系
+### 專案間的依賴關係
 
-下图展示了解决方案中项目间的依赖关系(有些项目比较简单就未展示):
+下圖展示瞭解決方案中專案間的依賴關係(有些專案比較簡單就未展示):
 
 ![domain-driven-design-project-relations](images/domain-driven-design-project-relations.png)
 
-之前已介绍了这些项目.现在,我们来解释依赖的原因:
+之前已介紹了這些專案.現在,我們來解釋依賴的原因:
 
-* `Domain.Shared` 所有项目直接或间接依赖此项目.此项目中的所有类型都可以被其它项目所引用.
-* `Domain` 仅依赖`Domain.Shared`项目,因为`Domain.Shared`本就属于领域层的一部分.例如,`Domain.Shared`项目中的枚举类型 `IssueType` 被`Domain`项目中的`Issue`实体所引用.
-* `Application.Contracts` 依赖`Domain.Shared`项目,可以在DTO中重用`Domain.Shared`中的类型.例如,`Domain.Shared`项目中的枚举类型 `IssueType` 同样被`Contracts`项目中的`CreateIssueDto`DTO所引用.
-* `Application` 依赖`Application.Contracts`项目,因为此项目需要实现应用服务的接口及接口使用的DTO.另外也依赖`Domain`项目,因为应用服务的实现必须依赖领域层中的对象.
-* `EntityFrameworkCore` 依赖`Domain`项目,因为此项目需要将领域对象(实体或值对象)映射到数据库的表,另外还需要实现`Domain`项目中的仓储接口.
-* `HttpApi` 依赖`Application.Contracts`项目,因为Controllers需要注入应用服务.
-* `HttpApi.Client` 依赖`Application.Contracts`项目,因为此项目需要是使用应用服务.
-* `Web` 依赖`HttpApi`项目,因为此项目对外提供HTTP APIs.另外Pages或Components 需要使用应用服务,所以还间接依赖了`Application.Contracts`项目
+* `Domain.Shared` 所有專案直接或間接依賴此專案.此專案中的所有型別都可以被其它專案所引用.
+* `Domain` 僅依賴`Domain.Shared`專案,因為`Domain.Shared`本就屬於領域層的一部分.例如,`Domain.Shared`專案中的列舉型別 `IssueType` 被`Domain`專案中的`Issue`實體所引用.
+* `Application.Contracts` 依賴`Domain.Shared`專案,可以在DTO中重用`Domain.Shared`中的型別.例如,`Domain.Shared`專案中的列舉型別 `IssueType` 同樣被`Contracts`專案中的`CreateIssueDto`DTO所引用.
+* `Application` 依賴`Application.Contracts`專案,因為此專案需要實現應用服務的介面及介面使用的DTO.另外也依賴`Domain`專案,因為應用服務的實現必須依賴領域層中的物件.
+* `EntityFrameworkCore` 依賴`Domain`專案,因為此專案需要將領域物件(實體或值物件)對映到資料庫的表,另外還需要實現`Domain`專案中的倉儲介面.
+* `HttpApi` 依賴`Application.Contracts`專案,因為Controllers需要注入應用服務.
+* `HttpApi.Client` 依賴`Application.Contracts`專案,因為此專案需要是使用應用服務.
+* `Web` 依賴`HttpApi`專案,因為此專案對外提供HTTP APIs.另外Pages或Components 需要使用應用服務,所以還間接依賴了`Application.Contracts`專案
 
-#### 虚线依赖
+#### 虛線依賴
 
-你在上图中会发现用虚线表示了另外两个依赖.`Web`项目依赖了 `Application` and `EntityFrameworkCore`,理论上`Web`不应该依赖这两个项目,但实际上依赖了.原因如下:
+你在上圖中會發現用虛線表示了另外兩個依賴.`Web`專案依賴了 `Application` and `EntityFrameworkCore`,理論上`Web`不應該依賴這兩個專案,但實際上依賴了.原因如下:
 
-`Web`是最终的运行程序,是负责托管Web的宿主,它在运行时需要**应用服务和仓储的实现类**.
+`Web`是最終的執行程式,是負責託管Web的宿主,它在執行時需要**應用服務和倉儲的實現類**.
 
-这种依赖关系的设计,可能会让你有机会在展现层直接使用到EF Core的对象,**应该严格禁止这样的做法**.如果想在解决方案分层上规避这种问题,有下面两种方式,相对复杂一些:
+這種依賴關係的設計,可能會讓你有機會在展現層直接使用到EF Core的物件,**應該嚴格禁止這樣的做法**.如果想在解決方案分層上規避這種問題,有下面兩種方式,相對複雜一些:
 
-* 将`Web`项目类型改为razor类库,并创建一个新项目,比如`Web.Host`,`Web.Host`依赖`Web`,`Application`,`EntityFrameworkCore`三个项目,并作为Web宿主程序运行.注意,不要写任何与UI相关的代码,只是作为**宿主运行**.
-* 在`Web`项目中移除对`Application`和`EntityFrameworkCore`的引用,`Web`在启动时,再动态加载程序集`IssueTracking.Application.dll`和`IssueTracking.EntityFrameworkCore.dll`.可以使用ABP框架的[插件模块](PlugIn-Modules.md)来动态加载程序集.
+* 將`Web`專案型別改為razor類庫,並建立一個新專案,比如`Web.Host`,`Web.Host`依賴`Web`,`Application`,`EntityFrameworkCore`三個專案,並作為Web宿主程式執行.注意,不要寫任何與UI相關的程式碼,只是作為**宿主執行**.
+* 在`Web`專案中移除對`Application`和`EntityFrameworkCore`的引用,`Web`在啟動時,再動態載入程式集`IssueTracking.Application.dll`和`IssueTracking.EntityFrameworkCore.dll`.可以使用ABP框架的[外掛模組](PlugIn-Modules.md)來動態載入程式集.
 
-### DDD模式的应用程序执行顺序
+### DDD模式的應用程式執行順序
 
-下图展示了基于DDD模式下的Web应用程序执行顺序:
+下圖展示了基於DDD模式下的Web應用程式執行順序:
 
 ![](images/domain-driven-design-web-request-flow.png)
 
-* 通常由UI(用例)发起一个HTTP请求到服务器.
-* 由展现层(或分布式服务层)中的一个*MVC Controller*或*Razor Page Handler*处理请求,在这个阶段可以执行一些AOP逻辑([授权](Authorization.md),[验证](Validation.md),[异常处理](Exception-Handling.md)等),*MVC Controller*或*Razor Page Handler*调用注入的应用服务接口,并返回其调用后的结果(DTO)..
-* 应用服务使用领域层的对象(实体,仓储接口,领域服务等)来实现UI(用例)交互.此阶段同样可以执行一些AOP逻辑(授权,验证等).应用服务中的每个方法应该是一个[工作单元](Unit-Of-Work.md),代表它是一次原子性操作.
+* 通常由UI(用例)發起一個HTTP請求到伺服器.
+* 由展現層(或分散式服務層)中的一個*MVC Controller*或*Razor Page Handler*處理請求,在這個階段可以執行一些AOP邏輯([授權](Authorization.md),[驗證](Validation.md),[異常處理](Exception-Handling.md)等),*MVC Controller*或*Razor Page Handler*呼叫注入的應用服務介面,並返回其呼叫後的結果(DTO)..
+* 應用服務使用領域層的物件(實體,倉儲介面,領域服務等)來實現UI(用例)互動.此階段同樣可以執行一些AOP邏輯(授權,驗證等).應用服務中的每個方法應該是一個[工作單元](Unit-Of-Work.md),代表它是一次原子性操作.
 
-跨域问题大多数由**ABP框架自动实现**,通常不需要为此额外编码.
+跨域問題大多數由**ABP框架自動實現**,通常不需要為此額外編碼.
 
-### 通用原则
+### 通用原則
 
-在详细介绍之前,我们先来看一些DDD的总体原则.
+在詳細介紹之前,我們先來看一些DDD的總體原則.
 
-#### 数据库提供程序 / ORM 独立原则
+#### 資料庫提供程式 / ORM 獨立原則
 
-领域层和应用层应该与*数据库提供程序 / ORM*无关.领域层和应用层仅依赖仓储接口,并且仓储接口不依赖特定的ORM对象.
+領域層和應用層應該與*資料庫提供程式 / ORM*無關.領域層和應用層僅依賴倉儲介面,並且倉儲介面不依賴特定的ORM物件.
 
 原因如下:
 
-1. 未来领域层或应用层的基础设施会发生改变,例如,需要支持另外一种数据库类型,因此需要保持**领域层或应用层的基础设施是独立的**.
-2. 将基础设施的实现隐藏在仓储中,使得领域层或应用层更**专注于业务逻辑代码**.
-3. 可以通过模拟仓储接口,使得自动化测试更为方便.
+1. 未來領域層或應用層的基礎設施會發生改變,例如,需要支援另外一種資料庫型別,因此需要保持**領域層或應用層的基礎設施是獨立的**.
+2. 將基礎設施的實現隱藏在倉儲中,使得領域層或應用層更**專注於業務邏輯程式碼**.
+3. 可以透過模擬倉儲介面,使得自動化測試更為方便.
 
-> 关于此原则, `EntityFrameworkCore`项目只被启动程序项目所引用,解决方案中其它项目均未引用.
+> 關於此原則, `EntityFrameworkCore`專案只被啟動程式專案所引用,解決方案中其它專案均未引用.
 
-##### 关于数据库独立原则的讨论
+##### 關於資料庫獨立原則的討論
 
-**原因1**会非常影响你**领域对象的建模**(特别是实体间的关系)及**应用程序的代码**.假如,开始选择了关系型数据库,并使用了[Entity Framework Core](Entity-Framework-Core.md),后面尝试切换到[MongoDB](MongoDB.md),那么 **EF Core 中一些非常用的特性**你就不能使用了,例如:
+**原因1**會非常影響你**領域物件的建模**(特別是實體間的關係)及**應用程式的程式碼**.假如,開始選擇了關係型資料庫,並使用了[Entity Framework Core](Entity-Framework-Core.md),後面嘗試切換到[MongoDB](MongoDB.md),那麼 **EF Core 中一些非常用的特性**你就不能使用了,例如:
 
-* 无法使用[变更追踪](https://docs.microsoft.com/zh-cn/ef/core/querying/tracking) ,因为*MongoDB provider*没有提供此功能,因此,你始终需要显式的更新已变更的实体.
-* 无法在不同的聚合间使用[导航属性](https://docs.microsoft.com/zh-cn/ef/core/modeling/relationships),因为文档型数据库是不支持的.有关更多信息,请参见"规则:聚合间仅通过Id关联".
+* 無法使用[變更追蹤](https://docs.microsoft.com/zh-cn/ef/core/querying/tracking) ,因為*MongoDB provider*沒有提供此功能,因此,你始終需要顯式的更新已變更的實體.
+* 無法在不同的聚合間使用[導航屬性](https://docs.microsoft.com/zh-cn/ef/core/modeling/relationships),因為文件型資料庫是不支援的.有關更多資訊,請參見"規則:聚合間僅透過Id關聯".
 
-如果你认为这些功能对你很**重要**,并且你永远都不会**离开** *EF Core*,那么我们认为你可以忽略这一原则.假如你在设计实体关系时使用了*EF Core*,你甚至可以在应用层引用*EF Core Nuget*包,并直接使用异步的LINQ扩展方法,例如 `ToListAsync()`(有关更多信息,请参见[仓储](Repositories.md)文档中的*IQueryable*和*Async Operations*).
+如果你認為這些功能對你很**重要**,並且你永遠都不會**離開** *EF Core*,那麼我們認為你可以忽略這一原則.假如你在設計實體關係時使用了*EF Core*,你甚至可以在應用層引用*EF Core Nuget*包,並直接使用非同步的LINQ擴充套件方法,例如 `ToListAsync()`(有關更多資訊,請參見[倉儲](Repositories.md)文件中的*IQueryable*和*Async Operations*).
 
-但是我们仍然建议采用仓储模式来隐藏基础设施中实现过程.
+但是我們仍然建議採用倉儲模式來隱藏基礎設施中實現過程.
 
-#### 展现层技术无关原则
+#### 展現層技術無關原則
 
-展现层技术(UI框架)时现代应用程序中最多变的部分之一.**领域层和应用层**应该对展现层所采用的技术或框架**一无所知**.使用ABP启动模板就非常容易实现此原则.
+展現層技術(UI框架)時現代應用程式中最多變的部分之一.**領域層和應用層**應該對展現層所採用的技術或框架**一無所知**.使用ABP啟動模板就非常容易實現此原則.
 
-在某些情况下,你可能需要在应用层和展现层中写重复的逻辑,例如,参数验证和授权检查.展现层检查出于**用户体验**,应用层或领域层检查出于**数据安全性**和**数据完整性**.
+在某些情況下,你可能需要在應用層和展現層中寫重複的邏輯,例如,引數驗證和授權檢查.展現層檢查出於**使用者體驗**,應用層或領域層檢查出於**資料安全性**和**資料完整性**.
 
-#### 关注状态的变化,而不是报表/查询
+#### 關注狀態的變化,而不是報表/查詢
 
-DDD关注领域对象的**变化和相互作用**,如何创建或修改一个具有数据**完整性,有效性**,符合**业务规则**的实体对象.
+DDD關注領域物件的**變化和相互作用**,如何建立或修改一個具有資料**完整性,有效性**,符合**業務規則**的實體物件.
 
-DDD忽略**领域对象的数据展示**,这并不意味着它们并不重要,如果应用程序没有精美的看板和报表,谁会愿意用呢?但是报表是另外一个讨论话题,你可以通过使用SQL Server报表功能或ElasticSearch来提供数据展示,又或者使用优化后的SQL查询语句,创建数据库索引或存储过程.唯一的原则是不要将这些内容混入领域的业务逻辑中.
+DDD忽略**領域物件的資料展示**,這並不意味著它們並不重要,如果應用程式沒有精美的看板和報表,誰會願意用呢?但是報表是另外一個討論話題,你可以透過使用SQL Server報表功能或ElasticSearch來提供資料展示,又或者使用最佳化後的SQL查詢語句,建立資料庫索引或儲存過程.唯一的原則是不要將這些內容混入領域的業務邏輯中.
 
-## 实现领域驱动:构建组成
+## 實現領域驅動:構建組成
 
-这是本指南的重要部分,我们将通过示例介绍并解释一些**明确的规则**,在实现领域驱动设计时,你可以遵循这些规则并将其应用于解决方案中.
+這是本指南的重要部分,我們將透過示例介紹並解釋一些**明確的規則**,在實現領域驅動設計時,你可以遵循這些規則並將其應用於解決方案中.
 
-### 领域
+### 領域
 
-示例中会使用一些概念,这些概念在Github中被使用,例如, `Issue`(问题), `Repository`(仓库), `Label`(标签) 和`User`(用户).下图中展示了一些聚合,聚合根,实体,值对象以及它们之间的关系:
+示例中會使用一些概念,這些概念在Github中被使用,例如, `Issue`(問題), `Repository`(倉庫), `Label`(標籤) 和`User`(使用者).下圖中展示了一些聚合,聚合根,實體,值物件以及它們之間的關係:
 
 ![domain driven design example schema](images/domain-driven-design-example-domain-schema.png)
 
-**问题聚合** 由`Issue` 聚合根,及其包含的 `Comment` 和`IssueLabel` 集合组成.我们将重要讨论 `Issue` 聚合根:
+**問題聚合** 由`Issue` 聚合根,及其包含的 `Comment` 和`IssueLabel` 集合組成.我們將重要討論 `Issue` 聚合根:
 
 ![domain-driven-design-issue-aggregate-diagram](images/domain-driven-design-issue-aggregate-diagram.png)
 
 ### Aggregates
 
-如前所述, [聚合](Entities.md)是由**聚合根**包裹在一起的一组对象(实体和值对象).本节将介绍于聚合的有关原理和规则.
+如前所述, [聚合](Entities.md)是由**聚合根**包裹在一起的一組物件(實體和值物件).本節將介紹於聚合的有關原理和規則.
 
-> 后面的文档中,我们将使用 *实体* 替代 *聚合根* 或 *子集合实体* ,除非我们明确指明使用 *聚合根* 或 *子集合实体* .
+> 後面的文件中,我們將使用 *實體* 替代 *聚合根* 或 *子集合實體* ,除非我們明確指明使用 *聚合根* 或 *子集合實體* .
 
-#### 聚合 / 聚合根 原则
+#### 聚合 / 聚合根 原則
 
-##### 业务规则
+##### 業務規則
 
-实体负责实现与其自身属性相关的业务规则.同时*聚合根实体*还负责它们的子集合实体.
+實體負責實現與其自身屬性相關的業務規則.同時*聚合根實體*還負責它們的子集合實體.
 
-聚合应该通过领域规则和约束来保证自身的**完整性**和**有效性**.这意味着,实体与DTO是不同的,实体应该比DTO多了些**实现业务逻辑的方法**.我们应该尽可能地在实体上实现业务规则.
+聚合應該透過領域規則和約束來保證自身的**完整性**和**有效性**.這意味著,實體與DTO是不同的,實體應該比DTO多了些**實現業務邏輯的方法**.我們應該儘可能地在實體上實現業務規則.
 
-##### 独立单元
+##### 獨立單元
 
-应该在一个独立的单元中完成**一个聚合的获取及保存**,包括自身属性及其子集合.假如我们需要在`Issue`中添加一个新的`Comment`,步骤如下:
+應該在一個獨立的單元中完成**一個聚合的獲取及儲存**,包括自身屬性及其子集合.假如我們需要在`Issue`中新增一個新的`Comment`,步驟如下:
 
-* 从数据库中获取一个 `Issue` 对象,包括所有子集合(`Comments`和`IssueLabels`).
-* 使用 `Issue` 实体上的添加新`Comment`的方法,例如 `Issue.AddComment(...);`.
-* 在数据库的单次操作中完成整个 `Issue`对象(包括子集合)的保存.
+* 從資料庫中獲取一個 `Issue` 物件,包括所有子集合(`Comments`和`IssueLabels`).
+* 使用 `Issue` 實體上的新增新`Comment`的方法,例如 `Issue.AddComment(...);`.
+* 在資料庫的單次操作中完成整個 `Issue`物件(包括子集合)的儲存.
 
-对于在关系型数据库上用过 **EF Core** 的开发人员会认为,获取`Issue`的同时加载子集合没有必要并且还影响性能.为什么不使用SQL语句`Insert`来直接插入记录呢?
+對於在關係型資料庫上用過 **EF Core** 的開發人員會認為,獲取`Issue`的同時載入子集合沒有必要並且還影響效能.為什麼不使用SQL語句`Insert`來直接插入記錄呢?
 
-这样做的原因是我们需要执行业务规则来保证数据的一致性和完整性.假如有一个业务规则:"用户不能对已锁定的问题进行评论".那如何在不查询数据库的情况下,获取问题是否已被锁定?所以,只有关联的对象都被加载了的时候,我们才可以执行业务规则.
+這樣做的原因是我們需要執行業務規則來保證資料的一致性和完整性.假如有一個業務規則:"使用者不能對已鎖定的問題進行評論".那如何在不查詢資料庫的情況下,獲取問題是否已被鎖定?所以,只有關聯的物件都被載入了的時候,我們才可以執行業務規則.
 
-另外,使用**MongoDB**的开发人员就认为此原则很好理解.在MongoDB中,聚合对象(包含子集合)会被保存到一个`collection`中.因而,无需任何其它配置,就可以实现查询一个聚合,同时所有子对象.
+另外,使用**MongoDB**的開發人員就認為此原則很好理解.在MongoDB中,聚合物件(包含子集合)會被儲存到一個`collection`中.因而,無需任何其它配置,就可以實現查詢一個聚合,同時所有子物件.
 
-ABP框架有助于你实现这一原则
+ABP框架有助於你實現這一原則
 
-**例子: 问题追加评论**
+**例子: 問題追加評論**
 
 ````csharp
 public class IssueAppService : ApplicationService, IIssueAppService
@@ -285,107 +285,107 @@ public class IssueAppService : ApplicationService, IIssueAppService
 }
 ````
 
-通过`_issueRepository.GetAsync`方法来获取`Issue`对象时,默认就已经加载了所有子集合.对于MongoDB很简单,EF Core 则需要额外配置,一旦配置,ABP仓储类会自动处理.`_issueRepository.GetAsync`方法还有个可选参数`includeDetails`,可以传`false`,手动禁止加载子集合.
+透過`_issueRepository.GetAsync`方法來獲取`Issue`物件時,預設就已經載入了所有子集合.對於MongoDB很簡單,EF Core 則需要額外配置,一旦配置,ABP倉儲類會自動處理.`_issueRepository.GetAsync`方法還有個可選引數`includeDetails`,可以傳`false`,手動禁止載入子集合.
 
-> 如何配置及替代方案,请参考[EF Core document](Entity-Framework-Core.md)的*加载关联实体*  章节.
+> 如何配置及替代方案,請參考[EF Core document](Entity-Framework-Core.md)的*載入關聯實體*  章節.
 
-`Issue.AddComment`接收两个参数,分别是`userId`和`text`,再执行自己的业务规则,最终将评论添加到`Issue`的评论集合中.
+`Issue.AddComment`接收兩個引數,分別是`userId`和`text`,再執行自己的業務規則,最終將評論新增到`Issue`的評論集合中.
 
-最后,我们使用`_issueRepository.UpdateAsync`方法,将对象保存到数据库中.
+最後,我們使用`_issueRepository.UpdateAsync`方法,將物件儲存到資料庫中.
 
-> EF Core 具有**变更追踪**的功能,因此,不需要调用`_issueRepository.UpdateAsync`方法.ABP的工作单元会再方法结束时,自动执行`DbContext.SaveChanges()`的.如果使用MongoDB则需要显式手动调用.
+> EF Core 具有**變更追蹤**的功能,因此,不需要呼叫`_issueRepository.UpdateAsync`方法.ABP的工作單元會再方法結束時,自動執行`DbContext.SaveChanges()`的.如果使用MongoDB則需要顯式手動呼叫.
 >
-> 因此,当需要额外编写仓储层的实现,应该在实体变化时始终调用 `UpdateAsync` 方法.
+> 因此,當需要額外編寫倉儲層的實現,應該在實體變化時始終呼叫 `UpdateAsync` 方法.
 
-##### 事务边界
+##### 事務邊界
 
-通常认为一个聚合就是一个事务边界.如果用例只涉及单个聚合,那么读取及修改就是一个操作单元.对聚合内所有对象的修改都将作为原子操作一起保存,无需显式创建数据库事务.
+通常認為一個聚合就是一個事務邊界.如果用例只涉及單個聚合,那麼讀取及修改就是一個操作單元.對聚合內所有物件的修改都將作為原子操作一起儲存,無需顯式建立資料庫事務.
 
-但是,实际上,可能需要在一个用例中更改**多个聚合对象的实例**,并且还要求创建事务来保证**原子更新**和**数据一致性**.因此,ABP框架提供了为每个用例(应用服务中的方法),可以创建显式事务的功能.有关更多信息,请参见文档[工作单元](Unit-Of-Work.md).
+但是,實際上,可能需要在一個用例中更改**多個聚合物件的例項**,並且還要求建立事務來保證**原子更新**和**資料一致性**.因此,ABP框架提供了為每個用例(應用服務中的方法),可以建立顯式事務的功能.有關更多資訊,請參見文件[工作單元](Unit-Of-Work.md).
 
 ##### 序列化
 
-一个聚合(包含聚合根及子集合)可以被序列化或反序列化.例如,MongoDB在保存对象到数据库时,会将聚合序列化为JSON文件,读取时再进行反序列化.
+一個聚合(包含聚合根及子集合)可以被序列化或反序列化.例如,MongoDB在儲存物件到資料庫時,會將聚合序列化為JSON檔案,讀取時再進行反序列化.
 
-> 使用关系型数据库+ORM时,这个原则不是必须的,但是,这是领域驱动设计的重要实践.
+> 使用關係型資料庫+ORM時,這個原則不是必須的,但是,這是領域驅動設計的重要實踐.
 
-以下规则遵循序列化原则
+以下規則遵循序列化原則
 
-#### 聚合/聚合根规则及最佳实践
+#### 聚合/聚合根規則及最佳實踐
 
-以下规则是遵循上述原则.
+以下規則是遵循上述原則.
 
-##### 聚合间只通过ID相互引用
+##### 聚合間只通過ID相互引用
 
-聚合应该只引用其它聚合的ID,也就是说,不允许定义导航属性关联至其它聚合.
+聚合應該只引用其它聚合的ID,也就是說,不允許定義導航屬性關聯至其它聚合.
 
-* 该规则遵循了可序列化原则.
-* 该规则还可以避免不同聚合彼此间的相互操作以及业务逻辑的暴露.
+* 該規則遵循了可序列化原則.
+* 該規則還可以避免不同聚合彼此間的相互操作以及業務邏輯的暴露.
 
-下图中,可以看到两个聚合根,`GitRepository` 和`Issue` :
+下圖中,可以看到兩個聚合根,`GitRepository` 和`Issue` :
 
 ![domain-driven-design-reference-by-id-sample](images/domain-driven-design-reference-by-id-sample.png)
 
-* `GitRepository` 不应该包含 `Issue`的集合,因为`Issue`属于不同的聚合.
-* `Issue` 不应该包含导航属性至 `GitRepository` .因为 `GitRepository`属于不同的聚合.
+* `GitRepository` 不應該包含 `Issue`的集合,因為`Issue`屬於不同的聚合.
+* `Issue` 不應該包含導航屬性至 `GitRepository` .因為 `GitRepository`屬於不同的聚合.
 * `Issue` 可以有 `RepositoryId` 的引用.
 
-因此,若要获取`Issue`关联的 `GitRepository`对象,需要使用`Issue`的`RepositoryId`在数据库中进行一次查询.
+因此,若要獲取`Issue`關聯的 `GitRepository`物件,需要使用`Issue`的`RepositoryId`在資料庫中進行一次查詢.
 
-###### 对于EF Core和关系型数据库
+###### 對於EF Core和關係型資料庫
 
-MongoDB中不适合使用导航属性或集合的,原因是:当前源聚合对象会被序列化为JSON,其中会保存导航目标聚合的副本.
+MongoDB中不適合使用導航屬性或集合的,原因是:當前源聚合物件會被序列化為JSON,其中會儲存導航目標聚合的副本.
 
-在使用EF Core在关系型数据库上进行操作时,开发者可能认为此规则没必要.但是我们认为这是一条非常重要的规则,有助于降**低领域的复杂性**减少风险.我们强烈建议遵守此规则.如果你确定要忽略此规则,请参见上面的"关于数据库独立原理的讨论"章节.
+在使用EF Core在關係型資料庫上進行操作時,開發者可能認為此規則沒必要.但是我們認為這是一條非常重要的規則,有助於降**低領域的複雜性**減少風險.我們強烈建議遵守此規則.如果你確定要忽略此規則,請參見上面的"關於資料庫獨立原理的討論"章節.
 
-##### 保持聚合尽量的小
+##### 保持聚合儘量的小
 
-保持聚合简单而小巧是一个比较好的做法.因为聚合的读取与保存是一个整体,当处理较大对象时会出现性能问题,如下所示:
+保持聚合簡單而小巧是一個比較好的做法.因為聚合的讀取與儲存是一個整體,當處理較大物件時會出現效能問題,如下所示:
 
 ![domain-driven-design-aggregate-keep-small](images/domain-driven-design-aggregate-keep-small.png)
 
-角色聚合包含`UserRole`值对象集合,方便查询该角色下有哪些用户.注意,`UserRole`不是聚合,并且也遵守了*聚合间只通过ID相互引用*的规则.但是在现实场景中,一个角色可能被给成千上万个用户,当从数据库中加载一个角色时,会关联加载数千个用户对象,这里会有 严重的性能问题.
+角色聚合包含`UserRole`值物件集合,方便查詢該角色下有哪些使用者.注意,`UserRole`不是聚合,並且也遵守了*聚合間只通過ID相互引用*的規則.但是在現實場景中,一個角色可能被給成千上萬個使用者,當從資料庫中載入一個角色時,會關聯載入數千個使用者物件,這裡會有 嚴重的效能問題.
 
-反过来看,`User`也可以有`Roles` 集合,现实中一个用户不会具有太多的角色,因此采用`User`关联`Roles`这种方式比较合适.
+反過來看,`User`也可以有`Roles` 集合,現實中一個使用者不會具有太多的角色,因此採用`User`關聯`Roles`這種方式比較合適.
 
-当使用**非关系型数据库时**,`User`和`Role` 同时都有关联子集合,会出现另外一个问题.相同的记录会被重复记录在不同的集合中,并且难以保证数据一致性(需要添加记录到`User.Roles`和`Role.Users`中)
+當使用**非關係型資料庫時**,`User`和`Role` 同時都有關聯子集合,會出現另外一個問題.相同的記錄會被重複記錄在不同的集合中,並且難以保證資料一致性(需要新增記錄到`User.Roles`和`Role.Users`中)
 
-因此,请根据以下注意事项来确定聚合的边界:
+因此,請根據以下注意事項來確定聚合的邊界:
 
-* 同时被使用的对象.
-* 查询(读取/保存)性能和内存消耗.
-* 数据完整性,有效性,一致性.
+* 同時被使用的物件.
+* 查詢(讀取/儲存)效能和記憶體消耗.
+* 資料完整性,有效性,一致性.
 
-现实情况:
+現實情況:
 
-* 大多数聚合根**没有子集合**.
-* 子集合的数量控制在**100-150个**.如果集合数量超过150个,考虑将子对象改成聚合根.
+* 大多數聚合根**沒有子集合**.
+* 子集合的數量控制在**100-150個**.如果集合數量超過150個,考慮將子物件改成聚合根.
 
-##### 聚合根 / 实体的主键
+##### 聚合根 / 實體的主鍵
 
-* 聚合根通常具有唯一的标识符ID (主键: PK).我们建议使用 `Guid`作为聚合根的主键类型. (原因请参见[Guid生成文档](Guid-Generation.md)).
-* 聚合中的实体(非聚合根)可以使用联合主键.
+* 聚合根通常具有唯一的識別符號ID (主鍵: PK).我們建議使用 `Guid`作為聚合根的主鍵型別. (原因請參見[Guid生成文件](Guid-Generation.md)).
+* 聚合中的實體(非聚合根)可以使用聯合主鍵.
 
-如图所示:
+如圖所示:
 
 ![domain-driven-design-entity-primary-keys](images/domain-driven-design-entity-primary-keys.png)
 
-* `Organization`有一个`Guid`的标识符 (`Id`).
-* `OrganizationUser`是一个子集合,使用 `OrganizationId` 和`UserId`作为联合主键.
+* `Organization`有一個`Guid`的識別符號 (`Id`).
+* `OrganizationUser`是一個子集合,使用 `OrganizationId` 和`UserId`作為聯合主鍵.
 
-并不是所有的子集合的主键都是联合主键,有些情况下,可以使用单独的`Id`作为主键.
+並不是所有的子集合的主鍵都是聯合主鍵,有些情況下,可以使用單獨的`Id`作為主鍵.
 
-> 联合主键实际上时关系型数据库中的概念,因为子集合对象有与之对应的数据库表,而表也要有主键.但是在非关系型数据库中,无需为子集合实体定义主键,因为它们本身就已属于一个聚合根.
+> 聯合主鍵實際上時關係型資料庫中的概念,因為子集合物件有與之對應的資料庫表,而表也要有主鍵.但是在非關係型資料庫中,無需為子集合實體定義主鍵,因為它們本身就已屬於一個聚合根.
 
-##### 聚合根 / 实体的构造函数
+##### 聚合根 / 實體的建構函式
 
-构造函数是实体生命周期的开始被执行.以下是构造函数的编写建议:
+建構函式是實體生命週期的開始被執行.以下是建構函式的編寫建議:
 
-* 将实体的**必填属性**作为构造函数参数,这样可以创建一个**有效(符合规则)的实体**.另外,将非必填属性作为构造函数的可选参数.
-* 参数必须**检查有效性**.
-* 所有**子集合**对象必须被初始化.
+* 將實體的**必填屬性**作為建構函式引數,這樣可以建立一個**有效(符合規則)的實體**.另外,將非必填屬性作為建構函式的可選引數.
+* 引數必須**檢查有效性**.
+* 所有**子集合**物件必須被初始化.
 
-**示例: `Issue` (聚合根) 构造函数**
+**示例: `Issue` (聚合根) 建構函式**
 
 ````csharp
 using System;
@@ -429,24 +429,24 @@ namespace IssueTracking.Issues
 }
 ````
 
-* `Issue` 通过构造函数的参数,对必填属性进行赋值,而从创建一个有效的实体对象.
-* 构造函数对参数进行**验证**(`Check.NotNullOrWhiteSpace(...)`必填项为空,抛出异常).
-* 初始化子集合.在实例化`Issue`对象后,访问 `Labels` ,不会出现空指针异常.
-* 构造函数还将 `id`传递给父类,不要在构造函数内生成 `Guid`(参阅 [Guid生成](Guid-Generation.md)).
-* 为ORM保留**私有的无参构造函数**.防止编写代码时,意外使用了无参构造函数.
+* `Issue` 透過建構函式的引數,對必填屬性進行賦值,而從建立一個有效的實體物件.
+* 建構函式對引數進行**驗證**(`Check.NotNullOrWhiteSpace(...)`必填項為空,丟擲異常).
+* 初始化子集合.在例項化`Issue`物件後,訪問 `Labels` ,不會出現空指標異常.
+* 建構函式還將 `id`傳遞給父類,不要在建構函式內生成 `Guid`(參閱 [Guid生成](Guid-Generation.md)).
+* 為ORM保留**私有的無參建構函式**.防止編寫程式碼時,意外使用了無參建構函式.
 
-> 参见 [实体](Entities.md) 文档,了解更多使用ABP框架创建实体的信息.
+> 參見 [實體](Entities.md) 文件,瞭解更多使用ABP框架建立實體的資訊.
 
-##### 实体属性访问器和方法
+##### 實體屬性訪問器和方法
 
-上面的示例中,我们在构造函数中对 `Title` 进行了非空检查.但是开发人员可以再次对`Title`进行赋值.
+上面的示例中,我們在建構函式中對 `Title` 進行了非空檢查.但是開發人員可以再次對`Title`進行賦值.
 
-如果我们使用**公开的属性**,则无法在实体控制数据的**有效性**和**完整性**.建议:
+如果我們使用**公開的屬性**,則無法在實體控制資料的**有效性**和**完整性**.建議:
 
-* 如果某个属性具有业务逻辑,则将该属性的**setter**改为私有.
-* 定义公开的方法来修改属性.
+* 如果某個屬性具有業務邏輯,則將該屬性的**setter**改為私有.
+* 定義公開的方法來修改屬性.
 
-**示例:提供方法修改属性**
+**示例:提供方法修改屬性**
 
 ````csharp
 using System;
@@ -486,17 +486,17 @@ namespace IssueTracking.Issues
 }
 ````
 
-* `RepositoryId` setter是私有的.创建后无法变更,业务规则不允许将已有的问题移到其它仓库.
-* `Title` setter是私有的.它的修改时需要加以验证.
-* `Text` 和 `AssignedUserId` setter 是公开的.因为业务规则允许它们为空或任意值.我们认为没必要将它们改为私有的,如果将来业务发生变化,再将setter改为私有,并提供公开的方法进行修改.另外实体属于领域层,不会直接暴露属性给应用层(或其它层),目前将其公开不是什么大问题.
-* `IsClosed` 和 `IssueCloseReason` 它们是一组属性.定义 `Close` 和 `ReOpen` 方法来同时对这两个属性进行赋值.这样可以防止问题被无故关闭.
+* `RepositoryId` setter是私有的.建立後無法變更,業務規則不允許將已有的問題移到其它倉庫.
+* `Title` setter是私有的.它的修改時需要加以驗證.
+* `Text` 和 `AssignedUserId` setter 是公開的.因為業務規則允許它們為空或任意值.我們認為沒必要將它們改為私有的,如果將來業務發生變化,再將setter改為私有,並提供公開的方法進行修改.另外實體屬於領域層,不會直接暴露屬性給應用層(或其它層),目前將其公開不是什麼大問題.
+* `IsClosed` 和 `IssueCloseReason` 它們是一組屬性.定義 `Close` 和 `ReOpen` 方法來同時對這兩個屬性進行賦值.這樣可以防止問題被無故關閉.
 
-##### 业务逻辑与实体异常
+##### 業務邏輯與實體異常
 
-对实体进行验证,或执行业务逻辑时,通常需要抛出异常:
+對實體進行驗證,或執行業務邏輯時,通常需要丟擲異常:
 
-* 领域中定义的**特定的异常**.
-* 实体方法中**抛出的异常**.
+* 領域中定義的**特定的異常**.
+* 實體方法中**丟擲的異常**.
 
 **示例**
 
@@ -547,12 +547,12 @@ public class Issue : AggregateRoot<Guid>
 }
 ````
 
-这里有两个业务规则:
+這裡有兩個業務規則:
 
-* 已锁定的问题无法重新开启.
-* 无法锁定已开打的问题.
+* 已鎖定的問題無法重新開啟.
+* 無法鎖定已開打的問題.
 
-当违反业务规则时,`Issue` 会抛出 `IssueStateException` 异常:
+當違反業務規則時,`Issue` 會丟擲 `IssueStateException` 異常:
 
 ````csharp
 using System;
@@ -570,14 +570,14 @@ namespace IssueTracking.Issues
 }
 ````
 
-抛出异常会引发两个问题:
+丟擲異常會引發兩個問題:
 
-1. 当异常发生时,**用户**应该看到异常(错误)信息吗?如果需要看到,异常消息如何实现本地化?   实体中无法注入[本地化](Localization.md)的 `IStringLocalizer` 接口.
-2. 对于Web应用或HTTP API,应向客户端返回什么**HTTP状态代码**.
+1. 當異常發生時,**使用者**應該看到異常(錯誤)資訊嗎?如果需要看到,異常訊息如何實現本地化?   實體中無法注入[本地化](Localization.md)的 `IStringLocalizer` 介面.
+2. 對於Web應用或HTTP API,應向客戶端返回什麼**HTTP狀態程式碼**.
 
-ABP框架的 [异常处理](Exception-Handling.md) 可以解决上述问题.
+ABP框架的 [異常處理](Exception-Handling.md) 可以解決上述問題.
 
-**示例:使用异常编码**
+**示例:使用異常編碼**
 
 ````csharp
 using Volo.Abp;
@@ -595,10 +595,10 @@ namespace IssueTracking.Issues
 }
 ````
 
-* `IssueStateException` 继承至 `BusinessException` .对于`BusinessException`的派生类,ABP框架默认返回的HTTP状态码是403 (默认是服务器内部错误 状态码 500)
-*  将`code` 作为Key,在本地化资源中查找对应的文字.
+* `IssueStateException` 繼承至 `BusinessException` .對於`BusinessException`的派生類,ABP框架預設返回的HTTP狀態碼是403 (預設是伺服器內部錯誤 狀態碼 500)
+*  將`code` 作為Key,在本地化資源中查詢對應的文字.
 
-现在,我们修改 `ReOpen` 方法:
+現在,我們修改 `ReOpen` 方法:
 
 ````csharp
 public void ReOpen()
@@ -613,31 +613,31 @@ public void ReOpen()
 }
 ````
 
-> 使用常量而不是魔法字符串.
+> 使用常量而不是魔法字串.
 
-在本地化资源文件中添加对应的记录:
+在本地化資原始檔中新增對應的記錄:
 
 ````json
 "IssueTracking:CanNotOpenLockedIssue": "Can not open a locked issue! Unlock it first."
 ````
 
-* 异常发生时,ABP将自动使用本地化消息(基于当前语言).
-* 异常编码 (`IssueTracking:CanNotOpenLockedIssue` )会被发送到客户端.同样可以以编程方式处理此异常.
+* 異常發生時,ABP將自動使用本地化訊息(基於當前語言).
+* 異常編碼 (`IssueTracking:CanNotOpenLockedIssue` )會被髮送到客戶端.同樣可以以程式設計方式處理此異常.
 
-> 你可以无需定义 `IssueStateException`,直接抛出`BusinessException`异常.详细信息,参见[异常处理文档](Exception-Handling.md)
+> 你可以無需定義 `IssueStateException`,直接丟擲`BusinessException`異常.詳細資訊,參見[異常處理文件](Exception-Handling.md)
 
-##### 实体中业务逻辑依赖外部服务时
+##### 實體中業務邏輯依賴外部服務時
 
-仅依赖实体本身的属性执行的业务规非常简单.但是有时候,复杂的业务逻辑会**查询数据库**或使用[依赖注入](Dependency-Injection.md)中的其它服务,这该怎么办?注意:**实体是无法注入服务的**.
+僅依賴實體本身的屬性執行的業務規非常簡單.但是有時候,複雜的業務邏輯會**查詢資料庫**或使用[依賴注入](Dependency-Injection.md)中的其它服務,這該怎麼辦?注意:**實體是無法注入服務的**.
 
-实现这种业务逻辑有两种方式:
+實現這種業務邏輯有兩種方式:
 
-* 将依赖的服务以**方法的参数**,传递到实体的业务逻辑方法中.
-* 定义一个**领域服务**.
+* 將依賴的服務以**方法的引數**,傳遞到實體的業務邏輯方法中.
+* 定義一個**領域服務**.
 
-领域服务我们后面再说.我们先看看在实体类中如何实现:
+領域服務我們後面再說.我們先看看在實體類中如何實現:
 
-**示例:业务规则: 不允许将3个以上未解决的问题关联到一个用户**
+**示例:業務規則: 不允許將3個以上未解決的問題關聯到一個使用者**
 
 ````csharp
 public class Issue : AggregateRoot<Guid>
@@ -664,35 +664,35 @@ public class Issue : AggregateRoot<Guid>
 }
 ````
 
-* `AssignedUserId` 私有的属性setter.此属性只能通过`AssignToAsync` 和`CleanAssignment` 方法来修改.
-* `AssignToAsync` 通过 `user.Id` 属性获取一个 `AppUser` 实体.
-* `IUserIssueService` 是获取用户未解决问题的服务.
-* `AssignToAsync` 当不满足业务规则时抛出异常.
-* 最后,符合规则,就对属性`AssignedUserId` 进行赋值.
+* `AssignedUserId` 私有的屬性setter.此屬性只能透過`AssignToAsync` 和`CleanAssignment` 方法來修改.
+* `AssignToAsync` 透過 `user.Id` 屬性獲取一個 `AppUser` 實體.
+* `IUserIssueService` 是獲取使用者未解決問題的服務.
+* `AssignToAsync` 當不滿足業務規則時丟擲異常.
+* 最後,符合規則,就對屬性`AssignedUserId` 進行賦值.
 
-这样就解决了将问题关联到用户时,需要调用外部服务的问题,但是它也存在几个问题:
+這樣就解決了將問題關聯到使用者時,需要呼叫外部服務的問題,但是它也存在幾個問題:
 
-* 实体**依赖了外部服务**,实体变得**复杂**.
-* 实体调用变的复杂.在调用`AssignToAsync` 方法时还需要传递 `IUserIssueService` 服务.
+* 實體**依賴了外部服務**,實體變得**複雜**.
+* 實體呼叫變的複雜.在呼叫`AssignToAsync` 方法時還需要傳遞 `IUserIssueService` 服務.
 
-实现这种业务逻辑另外一种方案,使用领域服务,后面将详细说明.
+實現這種業務邏輯另外一種方案,使用領域服務,後面將詳細說明.
 
-### 仓储
+### 倉儲
 
-[仓储](Repositories.md)是一个类集合的接口,它通常被领域层或应用层调用,负责访问持久化系统(数据库),读取写入业务对象(聚合).
+[倉儲](Repositories.md)是一個類集合的介面,它通常被領域層或應用層呼叫,負責訪問持久化系統(資料庫),讀取寫入業務物件(聚合).
 
-仓储的原则:
+倉儲的原則:
 
-* 在**领域层**中定义仓储接口,因为仓储会被领域层或应用层调用,在**基础设施层中实现**(*EntityFrameworkCore* 项目).
-* 仓储中**不要写任何业务逻辑**.
-* 仓储接口不依赖 **数据库提供程序 / ORM**.例如,不要在仓储中返回 `DbSet` 类型,因为 `DbSet`是EF Core中的对象.
-* **仅为聚合根定义仓储**,非聚合根对象不要提供仓储,因为子集合可以通过聚合根来进行持久化.
+* 在**領域層**中定義倉儲介面,因為倉儲會被領域層或應用層呼叫,在**基礎設施層中實現**(*EntityFrameworkCore* 專案).
+* 倉儲中**不要寫任何業務邏輯**.
+* 倉儲介面不依賴 **資料庫提供程式 / ORM**.例如,不要在倉儲中返回 `DbSet` 型別,因為 `DbSet`是EF Core中的物件.
+* **僅為聚合根定義倉儲**,非聚合根物件不要提供倉儲,因為子集合可以透過聚合根來進行持久化.
 
-#### 仓储中不要写任何业务逻辑
+#### 倉儲中不要寫任何業務邏輯
 
-我们经常不小心把业务逻辑编写到了仓储层.
+我們經常不小心把業務邏輯編寫到了倉儲層.
 
-**示例:从仓储中获取非活动的问题**
+**示例:從倉儲中獲取非活動的問題**
 
 ````csharp
 using System;
@@ -709,7 +709,7 @@ namespace IssueTracking.Issues
 }
 ````
 
-`IIssueRepository`继承至`IRepository<...>`接口,并新增一个新接口`GetInActiveIssuesAsync`.此仓储为聚合根`Issue`提供查询的实现.
+`IIssueRepository`繼承至`IRepository<...>`介面,並新增一個新介面`GetInActiveIssuesAsync`.此倉儲為聚合根`Issue`提供查詢的實現.
 
 ````csharp
 public class Issue : AggregateRoot<Guid>, IHasCreationTime
@@ -722,9 +722,9 @@ public class Issue : AggregateRoot<Guid>, IHasCreationTime
 }
 ````
 
-(上面的属性仅为了演示此示例)
+(上面的屬性僅為了演示此示例)
 
-原则要求仓储不包含业务逻辑,上面的示例"**什么是非活动的问题?**"这个属于业务规则吗?
+原則要求倉儲不包含業務邏輯,上面的示例"**什麼是非活動的問題?**"這個屬於業務規則嗎?
 
 ````csharp
 using System;
@@ -772,20 +772,20 @@ namespace IssueTracking.Issues
 }
 ````
 
-(使用EF Core来实现. 如何使用EF Core实现仓储,请参见[EF Core集成文档](Entity-Framework-Core.md) )
+(使用EF Core來實現. 如何使用EF Core實現倉儲,請參見[EF Core整合文件](Entity-Framework-Core.md) )
 
-来看一下`GetInActiveIssuesAsync`的实现,可以看到定义了一个**非活动问题的业务规则**:
+來看一下`GetInActiveIssuesAsync`的實現,可以看到定義了一個**非活動問題的業務規則**:
 
 - 是*open*的(非*IsClosed* )
-- 没有关联到任何人
-- 创建时间大于30天
-- 最近30天没有评论
+- 沒有關聯到任何人
+- 建立時間大於30天
+- 最近30天沒有評論
 
-这个业务逻辑就被实现在了仓储内部,当我们需要重用这个业务规则时就会出现问题.
+這個業務邏輯就被實現在了倉儲內部,當我們需要重用這個業務規則時就會出現問題.
 
-例如:我们需要再实体`Issue`上添加一个方法来判断是否非活动`bool IsInActive()`,以方便我们在`Issue`实例上获取.
+例如:我們需要再實體`Issue`上新增一個方法來判斷是否非活動`bool IsInActive()`,以方便我們在`Issue`例項上獲取.
 
-代码如下:
+程式碼如下:
 
 ````csharp
 public class Issue : AggregateRoot<Guid>, IHasCreationTime
@@ -815,15 +815,15 @@ public class Issue : AggregateRoot<Guid>, IHasCreationTime
 }
 ````
 
-我们需要拷贝代码来实现,如果将来业务规则发送变化,我们就必须修改这两处的代码,这样做非常危险.
+我們需要複製程式碼來實現,如果將來業務規則傳送變化,我們就必須修改這兩處的程式碼,這樣做非常危險.
 
-这里有一个很好的解决方案,就是使用*规约模式*.
+這裡有一個很好的解決方案,就是使用*規約模式*.
 
-### 规约模式
+### 規約模式
 
-[规约](Specifications.md)是一种**强命名**,**可重用**,**可组合**,**可测试**的实体过滤器.
+[規約](Specifications.md)是一種**強命名**,**可重用**,**可組合**,**可測試**的實體過濾器.
 
-ABP框架提供了基础设施来轻松定义规约类,你可以在代码中方便使用.我们来将非活动问题使用规约方式实现:
+ABP框架提供了基礎設施來輕鬆定義規約類,你可以在程式碼中方便使用.我們來將非活動問題使用規約方式實現:
 
 ````csharp
 using System;
@@ -855,13 +855,13 @@ namespace IssueTracking.Issues
 }
 ````
 
-基类`Specification<T>`通过表达式简化了创建规约的过程,仅需要将仓储中的表达式迁移至规约中.
+基類`Specification<T>`透過表示式簡化了建立規約的過程,僅需要將倉儲中的表示式遷移至規約中.
 
-现在,我们可以在`Issue` 和 `EfCoreIssueRepository`中重用规约`InActiveIssueSpecification`了.
+現在,我們可以在`Issue` 和 `EfCoreIssueRepository`中重用規約`InActiveIssueSpecification`了.
 
-#### 在实体内使用规约
+#### 在實體內使用規約
 
-`Specification` 类提供了一个`IsSatisfiedBy`方法,在实例对象上应用规约检查,判断是否满足规约的要求.代码如下:
+`Specification` 類提供了一個`IsSatisfiedBy`方法,在例項物件上應用規約檢查,判斷是否滿足規約的要求.程式碼如下:
 
 ````csharp
 public class Issue : AggregateRoot<Guid>, IHasCreationTime
@@ -879,11 +879,11 @@ public class Issue : AggregateRoot<Guid>, IHasCreationTime
 }
 ````
 
-实例化一个新的规约`InActiveIssueSpecification`实例,并通过`IsSatisfiedBy` 方法进行规约检查.
+例項化一個新的規約`InActiveIssueSpecification`例項,並透過`IsSatisfiedBy` 方法進行規約檢查.
 
-#### 在仓储内使用规约
+#### 在倉儲內使用規約
 
-首先,我们先修改一下仓储接口:
+首先,我們先修改一下倉儲介面:
 
 ````csharp
 public interface IIssueRepository : IRepository<Issue, Guid>
@@ -892,9 +892,9 @@ public interface IIssueRepository : IRepository<Issue, Guid>
 }
 ````
 
-先将`GetInActiveIssuesAsync` 方法改名为`GetIssuesAsync` ,因为我们改为使用规约方式,现在就无需为不同的查询条件创建不同的接口方法(例如:`GetAssignedIssues(...)`,`GetLockedIssues(...)`)
+先將`GetInActiveIssuesAsync` 方法改名為`GetIssuesAsync` ,因為我們改為使用規約方式,現在就無需為不同的查詢條件建立不同的介面方法(例如:`GetAssignedIssues(...)`,`GetLockedIssues(...)`)
 
-再修改下仓储实现:
+再修改下倉儲實現:
 
 ````csharp
 public class EfCoreIssueRepository :
@@ -916,9 +916,9 @@ public class EfCoreIssueRepository :
 }
 ````
 
-由于`ToExpression()`方法返回一个表达式,因此可以直接将其传递给`Where`方法来过滤实体.
+由於`ToExpression()`方法返回一個表示式,因此可以直接將其傳遞給`Where`方法來過濾實體.
 
-我们可以在调用`GetIssuesAsync`方法时,传递任何规约的实例.
+我們可以在呼叫`GetIssuesAsync`方法時,傳遞任何規約的例項.
 
 ````csharp
 public class IssueAppService : ApplicationService, IIssueAppService
@@ -939,9 +939,9 @@ public class IssueAppService : ApplicationService, IIssueAppService
 }
 ````
 
-##### 默认仓储使用规约
+##### 預設倉儲使用規約
 
-实际上,我们不必非要创建一个自定义仓储来使用规约方式,泛型仓储`IRepository`同样可以使用规约,因为`IRepository`已扩展了`IQueryable`对象,因此可以在泛型仓储上使用,代码如下:
+實際上,我們不必非要建立一個自定義倉儲來使用規約方式,泛型倉儲`IRepository`同樣可以使用規約,因為`IRepository`已擴充套件了`IQueryable`物件,因此可以在泛型倉儲上使用,程式碼如下:
 
 ````csharp
 public class IssueAppService : ApplicationService, IIssueAppService
@@ -962,11 +962,11 @@ public class IssueAppService : ApplicationService, IIssueAppService
 }
 ````
 
-`AsyncExecuter`是ABP框架提供的一个异步LINQ扩展方法(与`ToListAsync`类似),这个方法不依赖依赖EF Core,请参见[仓储文档](Repositories.md).
+`AsyncExecuter`是ABP框架提供的一個非同步LINQ擴充套件方法(與`ToListAsync`類似),這個方法不依賴依賴EF Core,請參見[倉儲文件](Repositories.md).
 
-#### 组合规约
+#### 組合規約
 
-规约强大的能力就是可组合.假设我们还有一个业务规则:`Issue` 仅在里程碑中才返回`true`:
+規約強大的能力就是可組合.假設我們還有一個業務規則:`Issue` 僅在里程碑中才返回`true`:
 
 ````csharp
 public class MilestoneSpecification : Specification<Issue>
@@ -985,7 +985,7 @@ public class MilestoneSpecification : Specification<Issue>
 }
 ````
 
-此规约与`InActiveIssueSpecification`的区别,它是有参数的.我们可以组合两种规约来实现获取指定里程碑下的非活动问题列表
+此規約與`InActiveIssueSpecification`的區別,它是有引數的.我們可以組合兩種規約來實現獲取指定里程碑下的非活動問題列表
 
 ````csharp
 public class IssueAppService : ApplicationService, IIssueAppService
@@ -1011,22 +1011,22 @@ public class IssueAppService : ApplicationService, IIssueAppService
 }
 ````
 
-上面的示例使用了`And`扩展方法来组合规约.还有更多的组合方法,如:`Or(...)`和`AndNot(...)`.
+上面的示例使用了`And`擴充套件方法來組合規約.還有更多的組合方法,如:`Or(...)`和`AndNot(...)`.
 
-> 有关ABP框架提供的规约更多信息,请参见[规约文档](Specifications.md).
+> 有關ABP框架提供的規約更多資訊,請參見[規約文件](Specifications.md).
 
-### 领域服务
+### 領域服務
 
-领域服务主要来实现本领域的逻辑:
+領域服務主要來實現本領域的邏輯:
 
-* 依赖**服务和仓储**.
-* 需要使用多个聚合.
+* 依賴**服務和倉儲**.
+* 需要使用多個聚合.
 
-领域服务和领域对象一起使用.领域服务可以获取并返回**实体**,**值对象**等,它们不返回**DTO**.DTO属于应用层的一部分.
+領域服務和領域物件一起使用.領域服務可以獲取並返回**實體**,**值物件**等,它們不返回**DTO**.DTO屬於應用層的一部分.
 
-**示例:用户关联一个问题**
+**示例:使用者關聯一個問題**
 
-需要在`Issue`实体中实现问题的关联:
+需要在`Issue`實體中實現問題的關聯:
 
 ````csharp
 public class Issue : AggregateRoot<Guid>
@@ -1053,9 +1053,9 @@ public class Issue : AggregateRoot<Guid>
 }
 ````
 
-现在我们把逻辑迁移到领域服务中实现.
+現在我們把邏輯遷移到領域服務中實現.
 
-首先,修改一下 `Issue` 类:
+首先,修改一下 `Issue` 類:
 
 ````csharp
 public class Issue : AggregateRoot<Guid>
@@ -1065,10 +1065,10 @@ public class Issue : AggregateRoot<Guid>
 }
 ````
 
-* 删除关联的相关方法.
-* 修改属性 `AssignedUserId` 的 setter 为 `internal`,以允许领域服务可以修改.
+* 刪除關聯的相關方法.
+* 修改屬性 `AssignedUserId` 的 setter 為 `internal`,以允許領域服務可以修改.
 
-下一步是创建一个名为`IssueManager`的领域服务,此领域服务的`AssignToAsync`方法负责将问题关联至指定的用户.
+下一步是建立一個名為`IssueManager`的領域服務,此領域服務的`AssignToAsync`方法負責將問題關聯至指定的使用者.
 
 ````csharp
 public class IssueManager : DomainService
@@ -1096,27 +1096,27 @@ public class IssueManager : DomainService
 }
 ````
 
-`IssueManager`可以注入其它服务,来查询指定用户已经关联的未解决问题数量.
+`IssueManager`可以注入其它服務,來查詢指定使用者已經關聯的未解決問題數量.
 
-> 我们建议使用 `Manager` 后缀来命名领域服务.
+> 我們建議使用 `Manager` 字尾來命名領域服務.
 
-这种设计的唯一缺陷是可以在类`Issue`外部修改`Issue.AssignedUserId`属性.但是它的访问级别是`internal`而非`public`,在`IssueTracking.Domain`项目内部才能被修改,我们认为这样是合理的:
+這種設計的唯一缺陷是可以在類`Issue`外部修改`Issue.AssignedUserId`屬性.但是它的訪問級別是`internal`而非`public`,在`IssueTracking.Domain`專案內部才能被修改,我們認為這樣是合理的:
 
-* 开发人员清楚领域层的开发规则,他们会使用`IssueManager`来执行业务逻辑.
-* 应用层开发人员只能使用`IssueManager`,因此他们无法直接修改实体属性.
+* 開發人員清楚領域層的開發規則,他們會使用`IssueManager`來執行業務邏輯.
+* 應用層開發人員只能使用`IssueManager`,因此他們無法直接修改實體屬性.
 
-尽管两种方式有各自的优势,但我们更喜欢创建领域服务并注入其它服务来执行业务逻辑这种方式.
+儘管兩種方式有各自的優勢,但我們更喜歡建立領域服務並注入其它服務來執行業務邏輯這種方式.
 
-### 应用服务
+### 應用服務
 
-应用服务是实现**用例**的无状态服务.应用服务通常**获取并返回DTO**.应用服务被展现层所使用,应用服务**调用领域对象**(实体,仓储等)来实现用例.
+應用服務是實現**用例**的無狀態服務.應用服務通常**獲取並返回DTO**.應用服務被展現層所使用,應用服務**呼叫領域物件**(實體,倉儲等)來實現用例.
 
-应用服务的通用原则:
+應用服務的通用原則:
 
-* 实现特定用例的**应用程序逻辑**,不要在应用服务内实现核心领域的逻辑.
-* 应用服务的方法**不要返回实体**.始终只返回DTO.
+* 實現特定用例的**應用程式邏輯**,不要在應用服務內實現核心領域的邏輯.
+* 應用服務的方法**不要返回實體**.始終只返回DTO.
 
-**示例:用户关联一个问题**
+**示例:使用者關聯一個問題**
 
 ````csharp
 using System;
@@ -1158,15 +1158,15 @@ namespace IssueTracking.Issues
 }
 ````
 
-应用服务的方法通常包含三个步骤:
+應用服務的方法通常包含三個步驟:
 
-1. 从数据库获取用例所需的领域对象.
-2. 使用领域对象(领域服务,实体等)执行业务逻辑.
-3. 将实体的变更持久化至数据库.
+1. 從資料庫獲取用例所需的領域物件.
+2. 使用領域物件(領域服務,實體等)執行業務邏輯.
+3. 將實體的變更持久化至資料庫.
 
-> 如果使用的是EF Core,第三步不是必须的,因为EF Core有追踪实体变化的功能.如果要利用此功能,请参阅上面的"关于数据库独立原则的讨论"章节.
+> 如果使用的是EF Core,第三步不是必須的,因為EF Core有追蹤實體變化的功能.如果要利用此功能,請參閱上面的"關於資料庫獨立原則的討論"章節.
 
-`IssueAssignDto` 是本示例中一个简单的DTO对象:
+`IssueAssignDto` 是本示例中一個簡單的DTO物件:
 
 ````csharp
 using System;
@@ -1181,35 +1181,35 @@ namespace IssueTracking.Issues
 }
 ````
 
-### 数据传输对象
+### 資料傳輸物件
 
-[DTO](Data-Transfer-Objects.md)是应用层与展现层间传输数据的简单对象.应用服务方法获取并返回Dto.
+[DTO](Data-Transfer-Objects.md)是應用層與展現層間傳輸資料的簡單物件.應用服務方法獲取並返回Dto.
 
-#### DTO通用原则和最佳实践
+#### DTO通用原則和最佳實踐
 
-* DTO应该是**可被序列化**的.因为大所数情况下,DTO是通过网络传输的,因此它应该具有**无参的构造函数**.
-* 不应该包含任何**业务逻辑**.
-* **切勿**继承或引用**实体**.
+* DTO應該是**可被序列化**的.因為大所數情況下,DTO是透過網路傳輸的,因此它應該具有**無參的建構函式**.
+* 不應該包含任何**業務邏輯**.
+* **切勿**繼承或引用**實體**.
 
-**输入DTO**(应用服务方法的参数)与 **输出DTO** (应用服务方法的返回对象)具有不同的作用,因此,它们应该区别对待. 
+**輸入DTO**(應用服務方法的引數)與 **輸出DTO** (應用服務方法的返回物件)具有不同的作用,因此,它們應該區別對待. 
 
-#### 输入DTO 最佳实践
+#### 輸入DTO 最佳實踐
 
-##### 不要在输入DTO中定义不使用的属性
+##### 不要在輸入DTO中定義不使用的屬性
 
-**仅**在输入DTO中定义用例**所需要的属性**！否则,会造成调用应用服务的客户端产生困惑.
+**僅**在輸入DTO中定義用例**所需要的屬性**！否則,會造成呼叫應用服務的客戶端產生困惑.
 
-这个规则好像没什么必要,因为没人会在方法参数(输入DTO)中添加无用的属性.但是,有时候,特别是在重用DTO时,输入DTO会包含无用的属性.
+這個規則好像沒什麼必要,因為沒人會在方法引數(輸入DTO)中新增無用的屬性.但是,有時候,特別是在重用DTO時,輸入DTO會包含無用的屬性.
 
-##### 不要重用输入DTO
+##### 不要重用輸入DTO
 
-**为每个用例**(应用服务的方法)单独定义一个**专属的输入DTO**.否则,在一些情况下,会添加一些不被使用的属性,这样就违反上面的规则:不要在输入DTO中定义不使用的属性.
+**為每個用例**(應用服務的方法)單獨定義一個**專屬的輸入DTO**.否則,在一些情況下,會新增一些不被使用的屬性,這樣就違反上面的規則:不要在輸入DTO中定義不使用的屬性.
 
-在两个用例中重用相同的DTO似乎很有吸引力,因为它们的属性是一模一样的.现阶段它们是一样的,但是随着业务变化,可能它们会产生差异,届时你可能还是需要进行拆分.**和用例间的耦合相比,代码的复制可能是更好的做法**.
+在兩個用例中重用相同的DTO似乎很有吸引力,因為它們的屬性是一模一樣的.現階段它們是一樣的,但是隨著業務變化,可能它們會產生差異,屆時你可能還是需要進行拆分.**和用例間的耦合相比,程式碼的複製可能是更好的做法**.
 
-重用输入DTO的另外一种方式是**继承**DTO,这同样会产生上面描述的问题.
+重用輸入DTO的另外一種方式是**繼承**DTO,這同樣會產生上面描述的問題.
 
-**示例:用户应用服务**
+**示例:使用者應用服務**
 
 ````csharp
 public interface IUserAppService : IApplicationService
@@ -1220,7 +1220,7 @@ public interface IUserAppService : IApplicationService
 }
 ````
 
-`UserDto`作为`IUserAppService`所有方法的输入DTO,代码如下:
+`UserDto`作為`IUserAppService`所有方法的輸入DTO,程式碼如下:
 
 ````csharp
 public class UserDto
@@ -1233,13 +1233,13 @@ public class UserDto
 }
 ````
 
-对于上面的示例:
+對於上面的示例:
 
-* `Id` 属性在 *Create* 方法中,没有被使用,因为`Id`由服务器生成.
-* `Password` 属性在 *Update* 方法中,没有被使用.因为有修改密码的单独方法.
-* `CreationTime` 属性未被使用,因为不允许客户端发送创建时间属性,这个应该由服务器生成.
+* `Id` 屬性在 *Create* 方法中,沒有被使用,因為`Id`由伺服器生成.
+* `Password` 屬性在 *Update* 方法中,沒有被使用.因為有修改密碼的單獨方法.
+* `CreationTime` 屬性未被使用,因為不允許客戶端傳送建立時間屬性,這個應該由伺服器生成.
 
-较好的做法应该这样:
+較好的做法應該這樣:
 
 ````csharp
 public interface IUserAppService : IApplicationService
@@ -1250,7 +1250,7 @@ public interface IUserAppService : IApplicationService
 }
 ````
 
-下面是输入DTO的定义:
+下面是輸入DTO的定義:
 
 ````csharp
 public class UserCreationDto
@@ -1274,16 +1274,16 @@ public class UserChangePasswordDto
 }
 ````
 
-虽然编写了更多的代码,但是这样可维护性更高.
+雖然編寫了更多的程式碼,但是這樣可維護性更高.
 
-**例外情况:**该规则有一些例外的情况,例如,你想开发两个方法,它们共用相同的输入DTO(通过继承或重用),有一个报表页面有多个过滤条件,多个应用服务使用相同的输入参数返回不同的结果(如,大屏展示数据,Excel报表,csv报表).这种情况下,你是需要修改一个参数,多个应用服务都应该一起被修改.
+**例外情況:**該規則有一些例外的情況,例如,你想開發兩個方法,它們共用相同的輸入DTO(透過繼承或重用),有一個報表頁面有多個過濾條件,多個應用服務使用相同的輸入引數返回不同的結果(如,大屏展示資料,Excel報表,csv報表).這種情況下,你是需要修改一個引數,多個應用服務都應該一起被修改.
 
-##### 输入DTO中验证逻辑
+##### 輸入DTO中驗證邏輯
 
-- 仅在DTO内执行**简单验证**.使用数据注解验证属性或通过`IValidatableObject` 方式.
-- **不要执行领域验证**.例如,不要在DTO中检查用户名是否唯一的验证.
+- 僅在DTO內執行**簡單驗證**.使用資料註解驗證屬性或透過`IValidatableObject` 方式.
+- **不要執行領域驗證**.例如,不要在DTO中檢查使用者名稱是否唯一的驗證.
 
-**示例:使用注解方式**
+**示例:使用註解方式**
 
 ````csharp
 using System.ComponentModel.DataAnnotations;
@@ -1309,26 +1309,26 @@ namespace IssueTracking.Users
 }
 ````
 
-当输入无效时,ABP框架会自动验证输入DTO,抛出`AbpValidationException`异常,并向客户返回`400`的HTTP状态码.
+當輸入無效時,ABP框架會自動驗證輸入DTO,丟擲`AbpValidationException`異常,並向客戶返回`400`的HTTP狀態碼.
 
-> 一些开发人员认为最好将验证规则和DTO分离.我们认为声明性(数据注解)方式是比较实用的,不会引起任何设计问题.如果你喜欢其它方式,ABP还支持[FluentValidation继承](FluentValidation.md).有关所有验证的详细文档,请参见[验证文档](Validation.md).
+> 一些開發人員認為最好將驗證規則和DTO分離.我們認為宣告性(資料註解)方式是比較實用的,不會引起任何設計問題.如果你喜歡其它方式,ABP還支援[FluentValidation繼承](FluentValidation.md).有關所有驗證的詳細文件,請參見[驗證文件](Validation.md).
 
-#### 输出DTO最佳实践
+#### 輸出DTO最佳實踐
 
-* 保持**数量较少**的输出DTO,尽可能**重用输出DTO**(例外:不要将输入DTO作为输出DTO).
-* 输出DTO可以包含比用例需要的属性**更多**的属性.
-* 针对 **Create** 和 **Update** 方法,返回实体的DTO.
+* 保持**數量較少**的輸出DTO,儘可能**重用輸出DTO**(例外:不要將輸入DTO作為輸出DTO).
+* 輸出DTO可以包含比用例需要的屬性**更多**的屬性.
+* 針對 **Create** 和 **Update** 方法,返回實體的DTO.
 
-以上建议的原因是:
+以上建議的原因是:
 
-* 使客户端代码易于开发和扩展:
-  * 客户端处理**相似但不相同**的DTO是有问题的.
-  * 将来UI或客户端通常会使用到DTO上的**其它属性**.返回实体的所有属性,可以在无需修改服务端代码的情况下,只修改客户端代码.
-  * 在开放API给**第三方客户端**时,避免不同需求的返回不同的DTO.
-* 使服务器端代码易于开发和扩展:
-  * 你需要**维护**的类的数量较少.
-  * 你可以重用Entity->DTO**对象映射**的代码.
-  * 不同的方法返回相同的类型,可以使得在**添加新方法**时变的简单明了.
+* 使客戶端程式碼易於開發和擴充套件:
+  * 客戶端處理**相似但不相同**的DTO是有問題的.
+  * 將來UI或客戶端通常會使用到DTO上的**其它屬性**.返回實體的所有屬性,可以在無需修改服務端程式碼的情況下,只修改客戶端程式碼.
+  * 在開放API給**第三方客戶端**時,避免不同需求的返回不同的DTO.
+* 使伺服器端程式碼易於開發和擴充套件:
+  * 你需要**維護**的類的數量較少.
+  * 你可以重用Entity->DTO**物件對映**的程式碼.
+  * 不同的方法返回相同的型別,可以使得在**新增新方法**時變的簡單明瞭.
 
 **示例:不同的方法返回不同的DTO**
 
@@ -1344,11 +1344,11 @@ public interface IUserAppService : IApplicationService
 }
 ````
 
-> 这里我们没有使用异步方式,是为了示例更清晰,你实际代码中应该使用异步方式)
+> 這裡我們沒有使用非同步方式,是為了示例更清晰,你實際程式碼中應該使用非同步方式)
 
-上面的示例代码中,每个方法都返回了不同的DTO类型,这样处理,会导致查询数据,映射对象都会有很多重复的代码.
+上面的示例程式碼中,每個方法都返回了不同的DTO型別,這樣處理,會導致查詢資料,對映物件都會有很多重複的程式碼.
 
-应用服务`IUserAppService` 可以简化成如下代码:
+應用服務`IUserAppService` 可以簡化成如下程式碼:
 
 ````csharp
 public interface IUserAppService : IApplicationService
@@ -1360,7 +1360,7 @@ public interface IUserAppService : IApplicationService
 }
 ````
 
-只需使用一个DTO对象
+只需使用一個DTO物件
 
 ````csharp
 public class UserDto
@@ -1373,46 +1373,46 @@ public class UserDto
 }
 ````
 
-* 删除 `GetUserNameAndEmail`和`GetRoles` 方法,因为,返回的DTO中已经包含了对应的信息.
-* `GetList`方法的返回的泛型类型与`Get`方法的返回类型一致.
-* `Create` 与 `Update`的返回类型都是 `UserDto`.
+* 刪除 `GetUserNameAndEmail`和`GetRoles` 方法,因為,返回的DTO中已經包含了對應的資訊.
+* `GetList`方法的返回的泛型型別與`Get`方法的返回型別一致.
+* `Create` 與 `Update`的返回型別都是 `UserDto`.
 
-如上所述,使用相同的DTO有很多优点.例如,我们在UI上使用**表格**展现用户集合,再用户数据更新后,我们可以获取到返回对象,并对**表格数据源进行更新**.因此,我们无需再次调用`GetList`来获取全部数据.这就是我们为什么建议`Create` 与 `Update`方法都返回相同`UserDto`的原因.
+如上所述,使用相同的DTO有很多優點.例如,我們在UI上使用**表格**展現使用者集合,再使用者資料更新後,我們可以獲取到返回物件,並對**表格資料來源進行更新**.因此,我們無需再次呼叫`GetList`來獲取全部資料.這就是我們為什麼建議`Create` 與 `Update`方法都返回相同`UserDto`的原因.
 
-##### 讨论
+##### 討論
 
-输出DTO的建议并不适用于所有情况.出于**性能**原因,我们可以忽略这些建议,尤其是在返回**大量数据**,为UI定制,**并发量较高**时.
+輸出DTO的建議並不適用於所有情況.出於**效能**原因,我們可以忽略這些建議,尤其是在返回**大量資料**,為UI定製,**併發量較高**時.
 
-在这些情况下,你可以定制仅包含**必要信息的DTO**.上面的建议只适用于额外多些属性并**不会损失太多性能**,并关注代码**可维护**的应用系统.
+在這些情況下,你可以定製僅包含**必要資訊的DTO**.上面的建議只適用於額外多些屬性並**不會損失太多效能**,並關注程式碼**可維護**的應用系統.
 
-#### 对象映射到对象
+#### 物件對映到物件
 
-当两个对象具有相同或相似的属性,自动将[对象映射到对象](Object-To-Object-Mapping.md)是一种将值从一个对象复制到另外一个对象非常有用的方法.
+當兩個物件具有相同或相似的屬性,自動將[物件對映到物件](Object-To-Object-Mapping.md)是一種將值從一個物件複製到另外一個物件非常有用的方法.
 
-DTO和实体通常具有相同或相似的属性,你经常需要从一个实体创建一个DTO对象.相较于手动映射,基于[AutoMapper](http://automapper.org/)的ABP[对象映射系统](Object-To-Object-Mapping.md),更加方便简单.
+DTO和實體通常具有相同或相似的屬性,你經常需要從一個實體建立一個DTO物件.相較於手動對映,基於[AutoMapper](http://automapper.org/)的ABP[物件對映系統](Object-To-Object-Mapping.md),更加方便簡單.
 
-* **仅**在**实体=>输出DTO**的时候使用自动映射.
-* 不要在**输入DTO=>Entity**的时候使用自动映射.
+* **僅**在**實體=>輸出DTO**的時候使用自動對映.
+* 不要在**輸入DTO=>Entity**的時候使用自動對映.
 
-因为以下原因,你不应该在输入DTO=>Entity的时候使用自动映射:
+因為以下原因,你不應該在輸入DTO=>Entity的時候使用自動對映:
 
-1. 实体类通常具有一个**构造函数**,该构造函数带有参数,确保创建有效的对象,而自动对象映射通常需要一个无参构造函数.
-2. 大多数实体中的属性setter是**私有的**,你只能调用实体上的方法来修改属性.
-3. 另外,需要进行对用户或客户端的**输入参数进行验证**,而不是盲目映射到实体属性上.
+1. 實體類通常具有一個**建構函式**,該建構函式帶有引數,確保建立有效的物件,而自動物件對映通常需要一個無參建構函式.
+2. 大多數實體中的屬性setter是**私有的**,你只能呼叫實體上的方法來修改屬性.
+3. 另外,需要進行對使用者或客戶端的**輸入引數進行驗證**,而不是盲目對映到實體屬性上.
 
-尽管其中一些问题可以额外配置映射来解决(如,AutoMapper允许自定义映射规则),但这样会使业务逻辑被**耦合到基础设施代码中**.我们认为业务代码应该明确,清晰且易于理解.
+儘管其中一些問題可以額外配置對映來解決(如,AutoMapper允許自定義對映規則),但這樣會使業務邏輯被**耦合到基礎設施程式碼中**.我們認為業務程式碼應該明確,清晰且易於理解.
 
-有关此部分的建议,请参加下面的"*实体创建*"部分
+有關此部分的建議,請參加下面的"*實體建立*"部分
 
 ## 用例
 
-本节将演示一些用例,并讨论替代方案
+本節將演示一些用例,並討論替代方案
 
-### 实体创建
+### 實體建立
 
-实体或聚合根的创建,是实体生命周期的开始."*聚合/聚合根规则及最佳实践*"章节中建议为Entity类定义**一个主构造函数**,以确保创建一个**有效的实体**.因此,需要创建该实体对象实例时,都应该**使用该构造函数**.
+實體或聚合根的建立,是實體生命週期的開始."*聚合/聚合根規則及最佳實踐*"章節中建議為Entity類定義**一個主建構函式**,以確保建立一個**有效的實體**.因此,需要建立該實體物件例項時,都應該**使用該建構函式**.
 
- `Issue` 聚合根的代码如下:
+ `Issue` 聚合根的程式碼如下:
 
 ````csharp
 public class Issue : AggregateRoot<Guid>
@@ -1445,12 +1445,12 @@ public class Issue : AggregateRoot<Guid>
 }
 ````
 
-* 通过其非空参数的构造函数创建有效的实体.
-* 如需修改 `Title` 属性,必须通过`SetTitle` 方法,来确保被设置值的有效性.
-* 如需将此问题关联至用户,则需要使用`IssueManager`(关联前需要执行一些业务逻辑,相关逻辑参见上面的"*领域服务*"部分)
-* `Text` 属性setter是公开的,因为它可以为null,并且本示例中也没有验证规则,它在构造函数中也是可选的.
+* 透過其非空引數的建構函式建立有效的實體.
+* 如需修改 `Title` 屬性,必須透過`SetTitle` 方法,來確保被設定值的有效性.
+* 如需將此問題關聯至使用者,則需要使用`IssueManager`(關聯前需要執行一些業務邏輯,相關邏輯參見上面的"*領域服務*"部分)
+* `Text` 屬性setter是公開的,因為它可以為null,並且本示例中也沒有驗證規則,它在建構函式中也是可選的.
 
-创建问题的应用服务代码:
+建立問題的應用服務程式碼:
 
 ````csharp
 public class IssueAppService : ApplicationService, IIssueAppService
@@ -1497,18 +1497,18 @@ public class IssueAppService : ApplicationService, IIssueAppService
 
 `CreateAsync` 方法;
 
-* 使用 `Issue` **构造函数** 创建一个有效的问题.`Id` 属性通过[IGuidGenerator](Guid-Generation.md)服务生成.此处没有使用对象自动映射.
-* 如果需要将**问题关联至用户**,则通过 `IssueManager`来执行关联逻辑.
-* **保存** 实体至数据库.
-* 最后,使用 `IObjectMapper` 将`Issue`实体**映射**为 `IssueDto` 并返回.
+* 使用 `Issue` **建構函式** 建立一個有效的問題.`Id` 屬性透過[IGuidGenerator](Guid-Generation.md)服務生成.此處沒有使用物件自動對映.
+* 如果需要將**問題關聯至使用者**,則透過 `IssueManager`來執行關聯邏輯.
+* **儲存** 實體至資料庫.
+* 最後,使用 `IObjectMapper` 將`Issue`實體**對映**為 `IssueDto` 並返回.
 
-#### 在创建实体时执行领域规则
+#### 在建立實體時執行領域規則
 
-`Issue`除了在构造函数中进行了一些简单验证外,示例中没其它业务验证.在有些情况下,在创建实体时会有一些其它业务规则.
+`Issue`除了在建構函式中進行了一些簡單驗證外,示例中沒其它業務驗證.在有些情況下,在建立實體時會有一些其它業務規則.
 
-假如,已经存在一个完全相同的问题,那么就不要再创建问题.这个规则应该在哪里执行?在**应用服务中执行是不对的**,因为它是**核心业务(领域)的规则**,应该将此规则在领域服务中执行.在这种情况下,我们应该在`IssueManager`中执行此规则,因此应该强制应用服务调用领域服务`IssueManager`来新建`Issue`.
+假如,已經存在一個完全相同的問題,那麼就不要再建立問題.這個規則應該在哪裡執行?在**應用服務中執行是不對的**,因為它是**核心業務(領域)的規則**,應該將此規則在領域服務中執行.在這種情況下,我們應該在`IssueManager`中執行此規則,因此應該強制應用服務呼叫領域服務`IssueManager`來新建`Issue`.
 
-首先修改 `Issue` 构造函数的访问级别为 `internal`:
+首先修改 `Issue` 建構函式的訪問級別為 `internal`:
 
 ````csharp
 public class Issue : AggregateRoot<Guid>
@@ -1531,7 +1531,7 @@ public class Issue : AggregateRoot<Guid>
 }
 ````
 
-这样可以防止,应用服务直接使用`Issue` 的构造函数去创建`Issue` 实例,必须使用 `IssueManager`来创建.然后我们再添加一个`CreateAsync`方法:
+這樣可以防止,應用服務直接使用`Issue` 的建構函式去建立`Issue` 例項,必須使用 `IssueManager`來建立.然後我們再新增一個`CreateAsync`方法:
 
 ````csharp
 using System;
@@ -1572,10 +1572,10 @@ namespace IssueTracking.Issues
 }
 ````
 
-* `CreateAsync` 方法会检查标题是否已经存在,当有相同标题的问题时,会抛出业务异常.
-* 如果标题没有重复的,则创建并返回一个新的 `Issue`对象.
+* `CreateAsync` 方法會檢查標題是否已經存在,當有相同標題的問題時,會丟擲業務異常.
+* 如果標題沒有重複的,則建立並返回一個新的 `Issue`物件.
 
-再修改`IssueAppService` 的代码,来调用 `IssueManager`的 `CreateAsync` 方法:
+再修改`IssueAppService` 的程式碼,來呼叫 `IssueManager`的 `CreateAsync` 方法:
 
 ````csharp
 public class IssueAppService : ApplicationService, IIssueAppService
@@ -1629,43 +1629,43 @@ public class IssueCreationDto
 }
 ````
 
-##### 讨论:为什么`IssueManager`中没有执行`Issue`的保存?
+##### 討論:為什麼`IssueManager`中沒有執行`Issue`的儲存?
 
-你可能会问"**为什么`IssueManager`中没有执行`Issue`的保存?**".我们认为这是应用服务的职责.
+你可能會問"**為什麼`IssueManager`中沒有執行`Issue`的儲存?**".我們認為這是應用服務的職責.
 
-因为,应用服务可能在保存`Issue`对象之前,需要对其它对象进行修改.如果领域服务执行了保存,那么*保存*操作就是重复的.
+因為,應用服務可能在儲存`Issue`物件之前,需要對其它物件進行修改.如果領域服務執行了儲存,那麼*儲存*操作就是重複的.
 
-* 会触发两次数据库会交互,这会导致性能损失.
-* 需要额外添加显式的事务来包含这两个操作,才能保证数据一致性.
-* 如果因为业务规则取消了实体的创建,则应该在数据库事务中回滚事务,取消所有操作.
+* 會觸發兩次資料庫會互動,這會導致效能損失.
+* 需要額外新增顯式的事務來包含這兩個操作,才能保證資料一致性.
+* 如果因為業務規則取消了實體的建立,則應該在資料庫事務中回滾事務,取消所有操作.
 
-假如在`IssueManager.CreateAsync`中先保存一次数据,那么数据会先执行一次*Insert*操作,后面关联用户的逻辑执行后,又会再执行一次*Update*操作.
+假如在`IssueManager.CreateAsync`中先儲存一次資料,那麼資料會先執行一次*Insert*操作,後面關聯使用者的邏輯執行後,又會再執行一次*Update*操作.
 
-如果不在`IssueManager.CreateAsync`中保存数据,那么,新建`Issue`和关联用户,只会执行一次*Insert*操作.
+如果不在`IssueManager.CreateAsync`中儲存資料,那麼,新建`Issue`和關聯使用者,只會執行一次*Insert*操作.
 
-##### 讨论:为什么没有在应用服务中执行标题是否重复的检查?
+##### 討論:為什麼沒有在應用服務中執行標題是否重複的檢查?
 
-简单地说"因为它是**核心领域逻辑**,应该在领域层实现".这又带来一个新问题,"**如何确定**是领域层逻辑,还是应用层逻辑"?(这个我们后面再详细讨论)
+簡單地說"因為它是**核心領域邏輯**,應該在領域層實現".這又帶來一個新問題,"**如何確定**是領域層邏輯,還是應用層邏輯"?(這個我們後面再詳細討論)
 
-对于此示例,可以用一个简单的问题来判断到底是领域逻辑还是应用逻辑:"如果还有另外一种创建`Issue`的方式(用例),我们是否还需要执行?如果需要执行,就属于领域层逻辑,不需要执行就是应用层逻辑".你可能认为为什么还有别的用例来创建`Issue`呢?
+對於此示例,可以用一個簡單的問題來判斷到底是領域邏輯還是應用邏輯:"如果還有另外一種建立`Issue`的方式(用例),我們是否還需要執行?如果需要執行,就屬於領域層邏輯,不需要執行就是應用層邏輯".你可能認為為什麼還有別的用例來建立`Issue`呢?
 
-* 应用程序的**最终用户**可能会在UI上创建`Issue`.
-* 系统内部人员,可以在**后台管理**端采用另外一种方式创建`Issue`(这种情况下,可能使用不同的业务规则).
-* 对**第三方客户端**开放的API,它们的规则又有所不同.
-* 还有**后台作业系统**会执行某些操作时创建`Issue`,这样,它是在没有任何用户交互情况下创建`Issue`.
-* 还有可能是UI上某个按钮,可以将某些内容(例如,讨论)转为`Issue`.
+* 應用程式的**終端使用者**可能會在UI上建立`Issue`.
+* 系統內部人員,可以在**後臺管理**端採用另外一種方式建立`Issue`(這種情況下,可能使用不同的業務規則).
+* 對**第三方客戶端**開放的API,它們的規則又有所不同.
+* 還有**後臺作業系統**會執行某些操作時建立`Issue`,這樣,它是在沒有任何使用者互動情況下建立`Issue`.
+* 還有可能是UI上某個按鈕,可以將某些內容(例如,討論)轉為`Issue`.
 
-我们还可以举更多例子.所有这些都应该通过**不同的应用服务方法来实现**(请参见下面的"*多个应用服务层*"部分),但是它们**始终遵循**以下的规则:
+我們還可以舉更多例子.所有這些都應該透過**不同的應用服務方法來實現**(請參見下面的"*多個應用服務層*"部分),但是它們**始終遵循**以下的規則:
 
-新的问题标题不能与任何已有的问题标题相同.这就是为什么说的"*标题是否重复的检查*"属于核心领域逻辑的原因,这个逻辑应该在领域层,而**不应该**在应用层的所有方法中**去重复**定义.
+新的問題標題不能與任何已有的問題標題相同.這就是為什麼說的"*標題是否重複的檢查*"屬於核心領域邏輯的原因,這個邏輯應該在領域層,而**不應該**在應用層的所有方法中**去重複**定義.
 
-### 修改实体
+### 修改實體
 
-创建实体后,将根据用例对实体进行修改,直到将其从系统中删除.可以有不同的用例直接或间接的修改实体.
+建立實體後,將根據用例對實體進行修改,直到將其從系統中刪除.可以有不同的用例直接或間接的修改實體.
 
-在本节中,我们将讨论一种典型的修改操作,该操作会修改`Issue`的多个属性.
+在本節中,我們將討論一種典型的修改操作,該操作會修改`Issue`的多個屬性.
 
-从*Update* DTO开始:
+從*Update* DTO開始:
 
 ````csharp
 public class UpdateIssueDto
@@ -1677,9 +1677,9 @@ public class UpdateIssueDto
 }
 ````
 
-对比`IssueCreationDto`,可以发现,缺少了`RepositoryId`属性,因为我们不允许跨仓库移动`Issue`.仅`Title`属性是必填的.
+對比`IssueCreationDto`,可以發現,缺少了`RepositoryId`屬性,因為我們不允許跨倉庫移動`Issue`.僅`Title`屬性是必填的.
 
-`IssueAppService`中*Update*的实现如下::
+`IssueAppService`中*Update*的實現如下::
 
 ````csharp
 public class IssueAppService : ApplicationService, IIssueAppService
@@ -1725,17 +1725,17 @@ public class IssueAppService : ApplicationService, IIssueAppService
 }
 ````
 
-* `UpdateAsync` 方法参数 `id`被作为独立参数,放置在`UpdateIssueDto`之外.这是一项设计决策,当你将此应用服务[自动导出](API/Auto-API-Controllers.md)为HTTP API时,API端点时帮助ABP正确定义HTTP路由,这与DDD无关.
-* 首先从数据库中**获取** `Issue` 实体.
-* 通过 `IssueManager`的 `ChangeTitleAsync`方法修改标题,而非直接通过 `Issue.SetTitle(...)`直接修改.因为我们需要像创建时那样,**执行标题的重复检查逻辑**.这需要对`Issue`类和`IssueManager`类进行一些调整(将在下面说明).
-* 通过 `IssueManager`的 `AssignToAsync` 方法来**关联用户**.
-* 直接设置 `Issue.Text`属性,因为它本身没有任何业务逻辑需要执行.如果以后需要可以再进行重构.
-* **保存修改**至数据库.同样,保存修改后的实体属于应用服务的职责,它可以协调业务对象和事务.如果在`IssueManager`内部的 `ChangeTitleAsync` 和 `AssignToAsync` 方法中进行保存,则会导致两次数据库操作(请参见上面的*讨论:为什么`IssueManager`中没有执行`Issue`的保存?*) 
-* 最后,使用 `IObjectMapper` 将`Issue`实体**映射**为 `IssueDto` 并返回.
+* `UpdateAsync` 方法引數 `id`被作為獨立引數,放置在`UpdateIssueDto`之外.這是一項設計決策,當你將此應用服務[自動匯出](API/Auto-API-Controllers.md)為HTTP API時,API端點時幫助ABP正確定義HTTP路由,這與DDD無關.
+* 首先從資料庫中**獲取** `Issue` 實體.
+* 透過 `IssueManager`的 `ChangeTitleAsync`方法修改標題,而非直接透過 `Issue.SetTitle(...)`直接修改.因為我們需要像建立時那樣,**執行標題的重複檢查邏輯**.這需要對`Issue`類和`IssueManager`類進行一些調整(將在下面說明).
+* 透過 `IssueManager`的 `AssignToAsync` 方法來**關聯使用者**.
+* 直接設定 `Issue.Text`屬性,因為它本身沒有任何業務邏輯需要執行.如果以後需要可以再進行重構.
+* **儲存修改**至資料庫.同樣,儲存修改後的實體屬於應用服務的職責,它可以協調業務物件和事務.如果在`IssueManager`內部的 `ChangeTitleAsync` 和 `AssignToAsync` 方法中進行儲存,則會導致兩次資料庫操作(請參見上面的*討論:為什麼`IssueManager`中沒有執行`Issue`的儲存?*) 
+* 最後,使用 `IObjectMapper` 將`Issue`實體**對映**為 `IssueDto` 並返回.
 
-如前所述,我们需要对`Issue`类和`IssueManager`类进行一些调整:
+如前所述,我們需要對`Issue`類和`IssueManager`類進行一些調整:
 
-首先,修改 `SetTitle`方法的访问级别为internal:
+首先,修改 `SetTitle`方法的訪問級別為internal:
 
 ````csharp
 internal void SetTitle(string title)
@@ -1744,7 +1744,7 @@ internal void SetTitle(string title)
 }
 ````
 
-再在`IssueManager`中添加一个新方法来修改标题:
+再在`IssueManager`中新增一個新方法來修改標題:
 
 ````csharp
 public async Task ChangeTitleAsync(Issue issue, string title)
@@ -1763,50 +1763,50 @@ public async Task ChangeTitleAsync(Issue issue, string title)
 }
 ````
 
-## 领域逻辑和应用逻辑
+## 領域邏輯和應用邏輯
 
-如前所述,领域驱动设计中的*业务逻辑*分为两部分(各层):领域逻辑和应用逻辑
+如前所述,領域驅動設計中的*業務邏輯*分為兩部分(各層):領域邏輯和應用邏輯
 
 ![domain-driven-design-domain-vs-application-logic](images/domain-driven-design-domain-vs-application-logic.png)
 
-领域逻辑是系统的*核心领域规则*组成,而应用逻辑则满足特定的*用例*.
+領域邏輯是系統的*核心領域規則*組成,而應用邏輯則滿足特定的*用例*.
 
-虽然定义很明确,但是实施起来却并不容易.你可能无法确定哪些代码应该属于领域层,哪些代码应该属于应用层,本节会尝试解释差异.
+雖然定義很明確,但是實施起來卻並不容易.你可能無法確定哪些程式碼應該屬於領域層,哪些程式碼應該屬於應用層,本節會嘗試解釋差異.
 
-### 多应用层
+### 多應用層
 
-当你的系统很大时,DDD有助于**处理复杂问题**.尤其是,**单个领域**需要多个**应用程序运行**,那么**领域逻辑与应用逻辑分离**就变的非常重要.
+當你的系統很大時,DDD有助於**處理複雜問題**.尤其是,**單個領域**需要多個**應用程式執行**,那麼**領域邏輯與應用邏輯分離**就變的非常重要.
 
-假设你正在构建一个具有多个应用程序的系统:
+假設你正在構建一個具有多個應用程式的系統:
 
-* 一个**公开的应用网站**,使用ASP.NET Core MVC构建,展示商品给来访者.这样的网站不需要身份验证即可查看商品.来访者只有执行了某些操作(例如,将商品添加到购物车)后,才需要登录网站.
-* 一个**后台管理系统**,UI使用Angular,通过REST API请求数据.内部员工使用这个系统来维护数据(例如,编辑商品说明).
-* 一个**移动端应用程序**,它比公开的网站UI上更加简洁.它通过REST API或其它技术(例如,TCP sockets)请求数据.
+* 一個**公開的應用網站**,使用ASP.NET Core MVC構建,展示商品給來訪者.這樣的網站不需要身份驗證即可檢視商品.來訪者只有執行了某些操作(例如,將商品新增到購物車)後,才需要登入網站.
+* 一個**後臺管理系統**,UI使用Angular,透過REST API請求資料.內部員工使用這個系統來維護資料(例如,編輯商品說明).
+* 一個**移動端應用程式**,它比公開的網站UI上更加簡潔.它透過REST API或其它技術(例如,TCP sockets)請求資料.
 
 ![domain-driven-design-multiple-applications](images/domain-driven-design-multiple-applications.png)
 
-每个应用程序都有不同的**需求**,不同的**用例**(应用服务方法),不同的DTO,不同的**验证**和**授权**规则等.
+每個應用程式都有不同的**需求**,不同的**用例**(應用服務方法),不同的DTO,不同的**驗證**和**授權**規則等.
 
-将所有这些逻辑都集中到一个应用层中,会使你的服务包含太多的`if`条件分支及**复杂的业务逻辑**,从而使你的代码开发,**维护**,测试,引发各种问题.
+將所有這些邏輯都集中到一個應用層中,會使你的服務包含太多的`if`條件分支及**複雜的業務邏輯**,從而使你的程式碼開發,**維護**,測試,引發各種問題.
 
-如果你在一个领域中有多个应用程序
+如果你在一個領域中有多個應用程式
 
-- 为每种应用程序或客户端创建独立的应用层,并在这些单独层中执行特定于应用业务逻辑.
-- 使用共享的核心领域逻辑
+- 為每種應用程式或客戶端建立獨立的應用層,並在這些單獨層中執行特定於應用業務邏輯.
+- 使用共享的核心領域邏輯
 
-为了实现这样的设计,首先我们需要区分领域逻辑和应用逻辑.
+為了實現這樣的設計,首先我們需要區分領域邏輯和應用邏輯.
 
-为了更清楚的实现,你可以为不同的应用类型创建不同的项目(`.csproj`):
+為了更清楚的實現,你可以為不同的應用型別建立不同的專案(`.csproj`):
 
-* `IssueTracker.Admin.Application` 和 `IssueTracker.Admin.Application.Contracts` 为后台管理系统提供服务.
-* `IssueTracker.Public.Application` 和 `IssueTracker.Public.Application.Contracts` 为公开网站提供服务.
-* `IssueTracker.Mobile.Application` 和 `IssueTracker.Mobile.Application.Contracts` 为移动端应用提供服务.
+* `IssueTracker.Admin.Application` 和 `IssueTracker.Admin.Application.Contracts` 為後臺管理系統提供服務.
+* `IssueTracker.Public.Application` 和 `IssueTracker.Public.Application.Contracts` 為公開網站提供服務.
+* `IssueTracker.Mobile.Application` 和 `IssueTracker.Mobile.Application.Contracts` 為移動端應用提供服務.
 
 ### 示例
 
-本节包含一些应用服务及领域服务的示例,讨论业务逻辑应该放置在哪一层
+本節包含一些應用服務及領域服務的示例,討論業務邏輯應該放置在哪一層
 
-**示例:在领域服务中创建`Organization`**
+**示例:在領域服務中建立`Organization`**
 
 ````csharp
 public class OrganizationManager : DomainService
@@ -1852,14 +1852,14 @@ public class OrganizationManager : DomainService
 }
 ````
 
-我们来逐个检查`CreateAsync`方法中的代码,讨论是否应该在领域服务中
+我們來逐個檢查`CreateAsync`方法中的程式碼,討論是否應該在領域服務中
 
-* **正确**:首先检查有**无重复的组织名称**,并抛出异常.这与核心领域规则有关,因为我们绝对不允许重复的名称.
-* **错误**:领域服务不应该执行**授权检查**,[授权](Authorization.md)应该在应用层处理. 
-* **错误**:它记录了日志,包括[当前用户](CurrentUser.md)的`UserName`.领域服务不应该依赖当前用户,即便系统中没有用户,领域服务也应可用.当前用户应该是与展现层或应用层有关的概念.
-* **错误**:它发送了有关新组织被创建的[邮件](Emailing.md),我们认为这也是特定用例的业务逻辑,你可能像在不同的用例中创建不同的邮件,又或者某些情况无需发送邮件.
+* **正確**:首先檢查有**無重複的組織名稱**,並丟擲異常.這與核心領域規則有關,因為我們絕對不允許重複的名稱.
+* **錯誤**:領域服務不應該執行**授權檢查**,[授權](Authorization.md)應該在應用層處理. 
+* **錯誤**:它記錄了日誌,包括[當前使用者](CurrentUser.md)的`UserName`.領域服務不應該依賴當前使用者,即便系統中沒有使用者,領域服務也應可用.當前使用者應該是與展現層或應用層有關的概念.
+* **錯誤**:它傳送了有關新組織被建立的[郵件](Emailing.md),我們認為這也是特定用例的業務邏輯,你可能像在不同的用例中建立不同的郵件,又或者某些情況無需傳送郵件.
 
-**示例:应用服务中创建`Organization`**
+**示例:應用服務中建立`Organization`**
 
 ````csharp
 public class OrganizationAppService : ApplicationService
@@ -1907,25 +1907,25 @@ public class OrganizationAppService : ApplicationService
 }
 ````
 
-我们来逐个检查`CreateAsync`方法中的代码,讨论是否应该在应用服务中
+我們來逐個檢查`CreateAsync`方法中的程式碼,討論是否應該在應用服務中
 
-* **正确**:应用服务的方法应该是一个工作单元(事务).ABP的[工作单元](Unit-Of-Work.md)系统可以使得此工作自动进行(甚至无需`[UnitOfWork]`注解).
-* **正确**: [授权](Authorization.md)应该在应用层处理.这里通过使用`[Authorize]`来完成.
-* **正确**:调用付款(基础设施服务)为此操作收取费用(创建组织是我们业务中的付费服务).
-* **正确**:应用服务负责将变更的数据保存到数据库.
-* **正确**:我们可以将[邮件](Emailing.md)作为通知发送给管理员.
-* **错误**:请勿从应用服务中返回实体,应该返回DTO.
+* **正確**:應用服務的方法應該是一個工作單元(事務).ABP的[工作單元](Unit-Of-Work.md)系統可以使得此工作自動進行(甚至無需`[UnitOfWork]`註解).
+* **正確**: [授權](Authorization.md)應該在應用層處理.這裡透過使用`[Authorize]`來完成.
+* **正確**:呼叫付款(基礎設施服務)為此操作收取費用(建立組織是我們業務中的付費服務).
+* **正確**:應用服務負責將變更的資料儲存到資料庫.
+* **正確**:我們可以將[郵件](Emailing.md)作為通知傳送給管理員.
+* **錯誤**:請勿從應用服務中返回實體,應該返回DTO.
 
-**讨论:为什么不将支付逻辑移到领域服务中?**
+**討論:為什麼不將支付邏輯移到領域服務中?**
 
-你可能想知道为什么付款逻辑代码不在`OrganizationManager`中.付款是非常**重要的事情**,我们不能**遗漏任何一次付款**.
+你可能想知道為什麼付款邏輯程式碼不在`OrganizationManager`中.付款是非常**重要的事情**,我們不能**遺漏任何一次付款**.
 
-它确实非常重要,但是,它不能放到领域服务中.我们可能还有**其它用例**来创建组织但不收取任何费用.例如:
+它確實非常重要,但是,它不能放到領域服務中.我們可能還有**其它用例**來建立組織但不收取任何費用.例如:
 
-* 管理员可以在后台管理系统创建新组织,而无需支付任何费用.
-* 后台作业系统导入,集成,同步组织而无需支付费用.
+* 管理員可以在後臺管理系統建立新組織,而無需支付任何費用.
+* 後臺作業系統匯入,整合,同步組織而無需支付費用.
 
-如你所见,**付款不是创建有效组织的必要操作**.它是特定的应用服务逻辑.
+如你所見,**付款不是建立有效組織的必要操作**.它是特定的應用服務邏輯.
 
 **示例:CRUD操作**
 
@@ -1961,18 +1961,18 @@ public class IssueAppService
 }
 ````
 
-该应用服务本身**不执行任何操作**,并将所有**操作转发给** *领域服务*.它甚至将DTO传递给`IssueManager`
+該應用服務本身**不執行任何操作**,並將所有**操作轉發給** *領域服務*.它甚至將DTO傳遞給`IssueManager`
 
-* 如果没有**任何业务逻辑**,只有简单的**CRUD**操作,**请勿**创建领域服务.
-* **切勿**将**DTO**传递给领域服务,或从领域服务返回**DTO**.
+* 如果沒有**任何業務邏輯**,只有簡單的**CRUD**操作,**請勿**建立領域服務.
+* **切勿**將**DTO**傳遞給領域服務,或從領域服務返回**DTO**.
 
-可以在应用服务中直接注入仓储,实现查询,创建,更新及删除操作.除非在这些操作过程中需要执行某些业务逻辑,在这种情况下,请创建领域服务.
+可以在應用服務中直接注入倉儲,實現查詢,建立,更新及刪除操作.除非在這些操作過程中需要執行某些業務邏輯,在這種情況下,請建立領域服務.
 
-> 不要创建"将来可能需要"这种CRUD领域服务方法([YAGNI](https://en.wikipedia.org/wiki/You_aren%27t_gonna_need_it)),在需要时重构它并重构现有代码. 由于应用层优雅地抽象了领域层,因此重构过程不会影响UI层和其他客户端.
+> 不要建立"將來可能需要"這種CRUD領域服務方法([YAGNI](https://en.wikipedia.org/wiki/You_aren%27t_gonna_need_it)),在需要時重構它並重構現有程式碼. 由於應用層優雅地抽象了領域層,因此重構過程不會影響UI層和其他客戶端.
 
-## 相关书籍
+## 相關書籍
 
-如果你对领域驱动设计和构建大型系统有兴趣,建议将以下书籍作为参考书籍:
+如果你對領域驅動設計和構建大型系統有興趣,建議將以下書籍作為參考書籍:
 
 * "*Domain Driven Design*" by Eric Evans
 * "*Implementing Domain Driven Design*" by Vaughn Vernon
